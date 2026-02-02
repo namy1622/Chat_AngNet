@@ -1,0 +1,20 @@
+# ===== .NET (server) =====
+server/**/bin/
+server/**/obj/
+server/**/*.user
+server/**/*.suo
+server/**/.vs/
+
+# ===== Angular (client) =====
+client/node_modules/
+client/dist/
+client/.angular/
+
+*/md
+
+# ===== Chung =====
+*.log
+.env
+.env.*
+.DS_Store
+Thumbs.db
