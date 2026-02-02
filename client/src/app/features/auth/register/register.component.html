@@ -1,0 +1,33 @@
+<div class="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-primary">Tạo tài khoản</h1>
+        <p class="text-text-muted mt-2">Tham gia cộng đồng chat ngay hôm nay</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
+
+        <app-ui-input label="Họ tên" placeholder="Nguyễn Văn A" formControlName="username"
+            [error]="getError('username')"></app-ui-input>
+
+        <app-ui-input label="Email" type="email" placeholder="name@example.com" formControlName="email"
+            [error]="getError('email')"></app-ui-input>
+
+        <app-ui-input label="Mật khẩu" type="password" placeholder="••••••••" formControlName="password"
+            [error]="getError('password')"></app-ui-input>
+
+        <app-ui-input label="Nhập lại mật khẩu" type="password" placeholder="••••••••" formControlName="confirmPassword"
+            [error]="getError('confirmPassword')"></app-ui-input>
+
+        <app-ui-button type="submit" [block]="true" [isLoading]="isSubmitting">
+            Đăng Ký
+        </app-ui-button>
+
+    </form>
+
+    <div class="mt-6 text-center text-sm text-text-muted">
+        Đã có tài khoản?
+        <a routerLink="/login" class="font-medium text-primary hover:underline">
+            Đăng nhập
+        </a>
+    </div>
+</div>

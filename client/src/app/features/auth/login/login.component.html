@@ -1,0 +1,41 @@
+<!--  card chứa form: nền trắng, bo góc, bóng đổ -->
+<div class="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+    <!-- header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-primary">MyChat</h1>
+        <p class="text-text-muted mt-2">Đăng nhập để bắt đầu</p>
+    </div>
+
+    <!-- form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <!-- email input -->
+        <!-- formControlName = "email": khớp với tên field trong forn builder -->
+        <app-ui-input label="Email" type="email" placeholder="Nhập email" formControlName="email"
+            [error]="getError('email')">
+        </app-ui-input>
+
+        <app-ui-input label="Password" type="password" placeholder="Nhập mật khẩu" formControlName="password"
+            [error]="getError('password')">
+        </app-ui-input>
+
+        <!-- forgot password -->
+        <div class="flex justify-end">
+            <a routerLink="/forgot-password" class="text-sm font-medium text-primary hover:text-primary-hover">
+                Forgot Password?
+            </a>
+        </div>
+
+        <!-- submit button -->
+        <app-ui-button type="submit" [block]="true" [isLoading]="isSubmitting">
+            Sign In
+        </app-ui-button>
+    </form>
+
+    <!-- footer: link sang Register -->
+    <div class="mt-6 text-center text-sm text-text-muted">
+        Don't have an account?
+        <a routerLink="/register" class="font-medium text-primary hover:underline">
+            Sign up
+        </a>
+    </div>
+</div>
