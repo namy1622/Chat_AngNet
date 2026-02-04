@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
       [type]="type()"
       [disabled]="disabled() || isLoading()"
       (click)="onClick.emit($event)"
-      class="inline-flex items-center mt-3 justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="inline-flex items-center mt-0 justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
       [ngClass]="[variantClasses(), sizeClasses(), block() ? 'w-full' : '']"
     >
       <!-- Loading Spinner -->

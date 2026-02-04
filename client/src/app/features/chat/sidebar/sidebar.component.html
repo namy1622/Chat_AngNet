@@ -1,1 +1,70 @@
-<p>sidebar works!</p>
+<!-- HEADER:  Thong tin user dang nhap -->
+<div class="p-4 flex items-center justify-between border-b border-gray-100">
+    <div class="flex items-center gap-3">
+        <!-- avatar voi cham online -->
+        <div class="relative">
+            <img src="https://ui-avatars.com/api/?name=Me&background=0D8ABC&color=fff" alt="My Avatar"
+                class="w-10 h-10 rounded-full">
+            <!-- cham xanh -->
+            <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+        </div>
+        <span class="font-semibold text-gray-800">My Profile</span>
+    </div>
+
+    <!-- nut tao chat moi -->
+    <app-ui-button variant="ghost" size="sm">
+        <app-ui-icon name="edit" [size]="20"></app-ui-icon>
+    </app-ui-button>
+    <!-- <button class="p-2 text-gray-400 hover: bg-gray-100 rounded-full transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+        </svg>
+    </button> -->
+</div>
+
+<!-- o tim kiem  -->
+<div class="px-4 py-3">
+    <div class="relative">
+        <!-- icon kinh lup -->
+        <app-ui-icon name="search" [size]="16"
+            class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"></app-ui-icon>
+        <input type="text" placeholder="Search..."
+            class="w-full bg-gray-100 text-sm rounded-xl py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder:text-gray-400">
+    </div>
+</div>
+
+<!-- Danh sach cuoc tro truyen (Conversation) -->
+<!-- overflow-y-auto: cuon doc khi danh sach dai -->
+<div class="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+    <!-- lap qua mang conversations (seed data) -->
+    @for(chat of conversations; track chat.id){
+    <!-- routerLink: khi click se chuyen den /c/{id} -->
+    <!-- routerLinkActive: them class 'bg-blue-50' neu dang o route nay -->
+    <a [routerLink]="['c', chat.id]" routerLinkActive="bg-blue-50 !border-blue-200"
+        class="flex gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-all border border-transparent">
+
+        <!-- avartar nguoi chat -->
+        <div class="relative flex-shrink-0">
+            <img [src]="chat.avatarUrl" class="w-12 h-12 rounded-full object-cover">
+            <!-- cham trang thai -->
+            @if(chat.isOnline){
+            <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+            }
+        </div>
+
+        <!-- thong tin chat -->
+        <!-- min-w-0 de dam bao text ko bi tran(truncate text) -->
+        <div class="flex-1 min-w-0">
+            <div class="flex justify-between items-baseline mb-1">
+                <h4 class="font-semibold text-gray-800 truncate">{{ chat.name}}</h4>
+                <span class="text-xs text-gray-400 flex-shrink-0 ml-2">{{ chat.time }}</span>
+            </div>
+
+            <!-- truncate: cat bot text dai -> thay bang ... -->
+            <p class="text-sm text-gray-500 truncate">{{ chat.lastMessage }}</p>
+        </div>
+    </a>
+    }
+
+</div>
