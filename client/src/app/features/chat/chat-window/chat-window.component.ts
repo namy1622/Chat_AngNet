@@ -1,4 +1,4 @@
-import { Component, effect, ElementRef, inject, viewChild } from '@angular/core';
+import { Component, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 // import { map } from 'rxjs';
@@ -7,10 +7,22 @@ import { UiIconComponent } from "../../../shared/components/ui-icon/ui-icon.comp
 import { map } from 'rxjs';
 import { Router } from '@angular/router';
 import { SidebarService } from "../../../core/services/sidebar.service";
+import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../core/services/auth.service';
+import { SignalrService } from '../../../core/services/signalr.service';
+
+
+// interface cho tin nhan
+interface Message {
+  user: string;
+  content: string;
+  time: string;
+  isMine: boolean;
+}
 
 @Component({
   selector: 'app-chat-window',
-  imports: [UiButtonComponent, UiIconComponent],
+  imports: [UiButtonComponent, UiIconComponent, CommonModule],
   templateUrl: './chat-window.component.html',
   styleUrl: './chat-window.component.scss',
   host: {
@@ -22,6 +34,12 @@ export class ChatWindowComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router) // inject router de chuyen huong
   sidebarService = inject(SidebarService);
+
+  private authService = inject(AuthService);
+  private signalrService = inject(SignalrService);
+
+  // danh sach tin nhan
+  messages = signal<Message[]>([]);
 
   // signal de theo doi conversation Id tu URL
   conversationId = toSignal(
@@ -35,6 +53,10 @@ export class ChatWindowComponent {
   // nó trả về Signal<ElementRef | underfined>
   private scrollContainer = viewChild<ElementRef>('scrollContainer');
   private chatInput = viewChild<ElementRef>('chatInput');
+
+  // chuyen doi Observable -> Signal
+  // luc nay currentỦe tro thanh 1 signal (giong convéationId)
+  currentUser = toSignal(this.authService.currentUser$);
 
   constructor() {
     // theo doi su thay doi cua tham so 'id' tren URL
@@ -58,6 +80,42 @@ export class ChatWindowComponent {
         }, 0);
       }
     });
+    //---
+    // 1. dki lang nghe tin nhan tu server
+    this.signalrService.addReceiveMessageListener((user, message) => {
+      // khi co tin nhan moi -> them vao d.s
+      const newMessage: Message = {
+        user: user,
+        content: message,
+        time: new Date().toLocaleDateString([], { hour: '2-digit', minute: '2-digit' }),
+        // kiem tra xem tin nhan cos phai cua minh ko? (Hien tai se check theo ten)
+        isMine: user === this.currentUser()?.firstName
+      };
+
+      this.messages.update(oldMessages => [...oldMessages, newMessage]);
+
+      // scroll xuong duoi cung khi co tin nhan moi (dung lai logic o effect or goi truc tiep)
+      setTimeout(() => this.scrollToBottom(), 50);
+    });
+  }
+
+  // ham gui tin nhan
+  onSendMessage() {
+    // lay value tu input
+    const textarea = this.chatInput()?.nativeElement;
+    const content = textarea.value?.trim();
+
+    if (!content) return; // neu chua nhap gi -> return
+
+    // lay ten user hien tai
+    const user = this.currentUser()?.firstName || 'Unknown';
+
+    // goi signalr service
+    this.signalrService.sendMessage(user, content);
+
+    // clear input sau khi gui
+    textarea.value = '';
+    this.adjustTextAreaHeight(); // reset chieu cao 
   }
 
   // ham resize textarea khi  go phim
@@ -75,7 +133,13 @@ export class ChatWindowComponent {
     // this.router.navigate(['/']) // quay ve trang goc (bo chon conversation)
   }
 
-
+  // scroll xuong duoi cung
+  private scrollToBottom() {
+    const container = this.scrollContainer()?.nativeElement;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
 }
 
 /*

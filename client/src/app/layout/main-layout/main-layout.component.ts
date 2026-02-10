@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from '../../features/auth/../chat/sidebar/sidebar.component';
 import { CommonModule } from '@angular/common';
 import { SidebarService } from '../../core/services/sidebar.service';
+import { SignalrService } from '../../core/services/signalr.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -94,6 +95,13 @@ export class MainLayoutComponent {
 
   // inject service
   sidebarService = inject(SidebarService);
+  signalrService = inject(SignalrService);
+
+  constructor() {
+    // khoi dong ket noi signalr ngay khi vao layout chinh
+    this.signalrService.startConnection();
+    console.log('Signalr connected');
+  }
 
   // onMobileCloseSidebar: 
   onMobileCloseSidebar() {
