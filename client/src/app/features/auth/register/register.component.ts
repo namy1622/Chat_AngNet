@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { UiInputComponent } from '../../../shared/components/ui-input/ui-input.component';
 import { UiButtonComponent } from '../../../shared/components/ui-button/ui-button.component';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-register',
@@ -13,9 +14,13 @@ import { UiButtonComponent } from '../../../shared/components/ui-button/ui-butto
 })
 export class RegisterComponent {
   private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
   isSubmitting = false;
 
   registerForm = this.fb.group({
+    firstName: ['', [Validators.required]],
+    lastName: ['', [Validators.required]],
     username: ['', [Validators.required, Validators.minLength(3)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
@@ -48,10 +53,23 @@ export class RegisterComponent {
     if (this.registerForm.valid) {
       this.isSubmitting = true;
       console.log('Register Data:', this.registerForm.value);
-      setTimeout(() => {
-        this.isSubmitting = false;
-        alert('Đăng ký thành công!');
-      }, 1500);
+
+      // goi api register
+      this.authService.register(this.registerForm.value).subscribe({
+        next: (response) => {
+          this.isSubmitting = false;
+          console.log('-- register success --');
+          alert('Đăng ký tài khoản thành công! Sẽ chuyển sang trang đăng nhập...');
+          this.router.navigate(['/auth/login']); // ve trang login
+        },
+        error: (err) => {
+          this.isSubmitting = false;
+          console.log('-- register failed --', err);
+
+          // hien thi loi (don gian - cai tien sau)
+          alert('Đăng ký thất bại! Kiểm tra lại Email/Password.' + err.error.message);
+        }
+      })
     } else {
       this.registerForm.markAllAsTouched();
     }

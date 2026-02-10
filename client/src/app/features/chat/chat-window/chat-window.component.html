@@ -1,9 +1,16 @@
+<!-- Kiem tra neu co conversationId thi hien thi chat, ko thi empty -->
+@if (conversationId()) {
 <div class="flex flex-col h-full bg-white">
 
     <!-- HEADER -->
     <div
         class="h-16 border-b border-gray-100 flex items-center justify-between px-6 bg-white backdrop-blur-md sticky top-0 z-10">
         <div class="flex items-center gap-3">
+            <!-- Nut back -->
+            <button (click)="goBack()" class="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full">
+                <app-ui-icon name="arrow-left" [size]="20"></app-ui-icon>
+            </button>
+
             <div class="relative">
                 <img src="https://ui-avatars.com/api/?name=Alice&background=random" alt=""
                     class="w-10 h-10 rounded-full shadow-sm">
@@ -19,7 +26,7 @@
     <!-- BODY: Danh sach tin nhan -->
     <!-- flex-1: chiem het chieu cao con lai -->
     <!-- overflow-y-auto: cuon doc khi nhieu tin nhan -->
-    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+    <div #scrollContainer class="flex-1 overflow-y-auto p-6 space-y-6">
         <!-- dong phan cach ngay -->
         <div class="flex items-center gap-4 py-2">
             <div class="h-px bg-gray-100 flex-1"></div>
@@ -63,8 +70,11 @@
             </app-ui-button>
 
             <!-- Ô nhập tin nhắn -->
-            <textarea rows="1" placeholder="Type your message..."
-                class="flex-1 bg-transparent border-none focus:ring-0 text-gray-800 placeholder:text-gray-400 resize-none py-2 max-h-32"></textarea>
+            <!-- #chatInput: đặt tên -->
+            <!-- (input)="adjustTextAreaHeight()" -> gọi hàm khi gõ -->
+            <textarea #chatInput rows="1" placeholder="Type your message..."
+                class="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none text-gray-800 placeholder:text-gray-400 resize-none py-2 max-h-32"
+                (input)="adjustTextAreaHeight()"></textarea>
 
             <app-ui-button variant="primary" size="md">
                 <app-ui-icon name="send" [size]="18"></app-ui-icon>
@@ -93,3 +103,46 @@
         </div>
     </div>
 </div>
+}
+@else{
+<!-- EMPTY STATE -->
+<div class="flex flex-col items-center justify-center h-full bg-gray-50 text-center px-6">
+    <!-- Icon Lon -->
+    <div class="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center mb-6">
+        <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+        </svg>
+    </div>
+
+    <!-- Tieu de -->
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome to Chat!</h2>
+
+    <!-- Mo ta -->
+    <p class="text-gray-500 max-w-sm mb-6">
+        Select a conversation from the sidebar to start chatting, or create a new one.
+    </p>
+
+    <!-- Nút tạo chat mới (tùy chọn) -->
+    <button (click)="goBack()"
+        class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all active:scale-95">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Start New Chat
+    </button>
+</div>
+}
+
+<!-- 
+    === Ly Thuyet ===
+
+1. @if / @else (Angular 17+):
+    - cu phap moi thay the *ngIf
+    - de doc hon, gan giong JS thuan
+
+2. conversationId():
+    - goi signal nhu mot ham de lay gia tri hien tai
+    - neu URL la "/" -> null/undefined -> @else duoc render 
+    - neu URL la "c/abc123" -> "abc123" -> @if duoc render
+-->

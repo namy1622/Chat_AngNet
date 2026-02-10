@@ -1,0 +1,28 @@
+// Custom scrollbar cho danh sách conversation
+:host {
+
+    // Webkit browsers (Chrome, Safari, Edge)
+    ::-webkit-scrollbar {
+        width: 5px; // Độ rộng thanh cuộn (mặc định ~17px)
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent; // Nền thanh cuộn
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background-color: #d1d5db; // Màu phần kéo (gray-300)
+        border-radius: 10px; // Bo tròn
+
+        &:hover {
+            background-color: #9ca3af; // Màu khi hover (gray-400)
+        }
+    }
+}
+
+/*
+📚 LÝ THUYẾT:
+1. ::-webkit-scrollbar: Chỉ hoạt động trên Chrome, Safari, Edge (Chromium)
+2. Firefox dùng scrollbar-width và scrollbar-color (CSS standard)
+3. width: 6px là kích thước phổ biến cho scrollbar nhỏ gọn
+*/

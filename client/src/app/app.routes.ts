@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthLayoutComponent } from './layout/auth-layout/auth-layout.component';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
 
@@ -38,6 +39,7 @@ export const routes: Routes = [
     // ====== Các trang chính - Đã đăng nhập ======
     {
         path: '', // url goc (localhost:...)
+        canActivate: [authGuard], // chi cho phep vao khi da login
         loadComponent: () => import('./layout/main-layout/main-layout.component')
             .then(m => m.MainLayoutComponent),
         children: [

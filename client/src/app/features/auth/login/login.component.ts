@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 // inport cac conponent da tu lam
 import { UiInputComponent } from '../../../shared/components/ui-input/ui-input.component';
 import { UiButtonComponent } from '../../../shared/components/ui-button/ui-button.component';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -23,6 +24,9 @@ import { UiButtonComponent } from '../../../shared/components/ui-button/ui-butto
 export class LoginComponent {
   // inject(): cach moi thay vi constructor(private fb: FormBuilder)
   private fb = inject(FormBuilder);
+
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   isSubmitting = false;
 
@@ -53,11 +57,21 @@ export class LoginComponent {
 
       console.log('-- Form data: ', this.loginForm.value);
 
-      // gia su goi API delay 2s
-      setTimeout(() => {
-        this.isSubmitting = false;
+      this.authService.login(this.loginForm.value).subscribe({
+        next: (response) => {
+          this.isSubmitting = false;
+          console.log('-- login success --', response);
 
-        alert('-- Login thanh cong --');
+          // chuyen huong ve trang chat chinh
+          this.router.navigate(['/']);
+        },
+        error: (err) => {
+          this.isSubmitting = false;
+          console.log('-- login failed --', err);
+
+          // hien thi loi (don gian - cai tien sau)
+          alert('Đăng nhập thất bại! Kiểm tra lại Email/Password.');
+        }
       })
     }
     else {

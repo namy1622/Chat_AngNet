@@ -5,7 +5,14 @@
     </div>
 
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
-
+        <div class="grid grid-cols-2 gap-4">
+            <app-ui-input class="" label="Họ" placeholder="Nguyễn" formControlName="firstName"
+                [error]="getError('firstName')">
+            </app-ui-input>
+            <app-ui-input class="" label="Tên" placeholder="Nguyễn" formControlName="lastName"
+                [error]="getError('lastName')">
+            </app-ui-input>
+        </div>
         <app-ui-input label="Họ tên" placeholder="Nguyễn Văn A" formControlName="username"
             [error]="getError('username')"></app-ui-input>
 
@@ -26,7 +33,7 @@
 
     <div class="mt-6 text-center text-sm text-text-muted">
         Đã có tài khoản?
-        <a routerLink="/login" class="font-medium text-primary hover:underline">
+        <a routerLink="/auth/login" class="font-medium text-primary hover:underline">
             Đăng nhập
         </a>
     </div>
