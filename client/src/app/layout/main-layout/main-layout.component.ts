@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { SidebarComponent } from '../../features/auth/../chat/sidebar/sidebar.component';
+import { SidebarComponent } from '../../features/chat/components/sidebar/sidebar.component';
 import { CommonModule } from '@angular/common';
 import { SidebarService } from '../../core/services/sidebar.service';
 import { SignalrService } from '../../core/services/signalr.service';

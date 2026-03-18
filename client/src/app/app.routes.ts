@@ -46,13 +46,13 @@ export const routes: Routes = [
             // route cho tung cuc hoi thoai: /c/abc123
             {
                 path: 'c/:id', // :id la tham so dong (dynamic)
-                loadComponent: () => import('./features/chat/chat-window/chat-window.component')
+                loadComponent: () => import('./features/chat/components/chat-window/chat-window.component')
                     .then(m => m.ChatWindowComponent)
             },
             // route trang mac dinh khi chua chon chat nao
             {
                 path: '',
-                loadComponent: () => import('./features/chat/chat-window/chat-window.component')
+                loadComponent: () => import('./features/chat/components/chat-window/chat-window.component')
                     .then(m => m.ChatWindowComponent)
             }
         ]

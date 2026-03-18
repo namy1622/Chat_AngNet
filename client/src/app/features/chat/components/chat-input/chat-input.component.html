@@ -1,0 +1,20 @@
+<div class="p-4 border-t border-gray-100 bg-white">
+    <div
+        class="flex items-center gap-2 bg-gray-50 border border-gray-200 p-2 rounded-2xl focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all">
+        <!--  -->
+        <app-ui-button variant="ghost" size="sm">
+            <app-ui-icon name="paperclip" [size]="20"></app-ui-icon>
+        </app-ui-button>
+
+        <!-- #chatInput: dat ten de truy cap tu .ts -->
+        <!-- keydown.enter: nhan enter -> gui tin nhan -->
+        <textarea #chatInput rows="1" placeholder="Type your message..."
+            (keydown.enter)="onSend(); $event.preventDefault()" (input)="adjustHeight()"
+            class="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none text-gray-800 placeholder:text-gray-400 resize-none py-2 max-h-32"></textarea>
+
+        <!-- button gui -->
+        <app-ui-button (click)="onSend()" variant="primary" size="md">
+            <app-ui-icon [name]="'send'" [size]="18"></app-ui-icon>
+        </app-ui-button>
+    </div>
+</div>

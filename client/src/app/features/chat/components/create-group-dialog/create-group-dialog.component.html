@@ -1,0 +1,99 @@
+<!-- overlay: lop phu mo den phia sau dialog -->
+<!-- (click)="onClose(): click vao vung toi -> dong dialog -->
+<div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="onClose()">
+    <!-- Dialog container -->
+    <!-- $event.stopPropagation(): ngan click ben trong dialog lan ra overlay -->
+    <!--                        : ky thuat JS ngan event lan ra component cha -->
+    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" (click)="$event.stopPropagation()">
+        <!-- Header -->
+        <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-gray-800">Create New Group</h2>
+            <button (click)="onClose()" class="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+                <app-ui-icon name="x" [size]="20"></app-ui-icon>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-5 space-y-4">
+            <!-- Input ten nhom -->
+            <!-- [(ngModel)]: two-way binding -> khi go, value tu cap nhat vao bien -->
+            <div>
+                <label for="" class="block text-sm font-medium text-gray-700 mb-1">Name Group</label>
+                <input type="text" placeholder="Input name group" [value]="groupName()"
+                    (input)="groupName.set($any($event.target).value)"
+                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm
+                                            focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400">
+            </div>
+
+            <!-- Input search user -->
+            <div>
+                <label for="" class="block text-sm font-medium text-gray-700 mb-1">Add Members</label>
+                <div class="relative">
+                    <app-ui-icon name="search" [size]="16"
+                        class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+                    </app-ui-icon>
+                    <input type="text" placeholder="Search user to add" (input)="onSearch($event)"
+                        class="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2 5 text-sm
+                                                focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400">
+                </div>
+            </div>
+
+            <!-- Danh sach user Da Chon (hien dang chip/tag) -->
+            @if(selectedUsers().length > 0){
+            <div class="flex flex-wrap gap-2">
+                @for(user of selectedUsers(); track user.id){
+                <!--  -->
+                <span
+                    class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-sm px-3 py-1.5 rounded-full">
+                    {{ user.firstName}} {{ user.lastName}}
+
+                    <!-- nut X -->
+                    <button (click)="onRemoveUser(user)" class="hover:bg-blue-100 rounded-full p-0.5 transition-colors">
+                        <app-ui-icon name="x" [size]="14"></app-ui-icon>
+                    </button>
+                </span>
+                }
+            </div>
+            }
+
+            <!-- Ket qua tim kiem -->
+            @if(searchResults().length > 0){
+            <div class="max-h-40 overflow-y-auto space-y-1 border border-gray-100 rounded-xl p-2">
+                @for(user of searchResults(); track user.id){
+                <!--  -->
+                <div (click)="onSelectUser(user)"
+                    class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                    <app-ui-avatar [src]="user.avatarUrl" [alt]="user.firstName" size="sm">
+
+                    </app-ui-avatar>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-800 truncate">
+                            {{user.firstName}} {{user.lastName}}
+                        </p>
+                        <p class="text-xs text-gray-400">{{user.userName}}</p>
+                    </div>
+                    <app-ui-icon name="plus" [size]="16" class="text-blue-500"></app-ui-icon>
+                </div>
+                }
+            </div>
+            }
+        </div>
+        <!-- Footer -->
+        <div class="p-5 border-t border-gray-100 flex justify-end gap-3">
+            <button (click)="onClose()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100">
+                Cancel
+            </button>
+            <!-- [disabled]: vo hieu nut khi dang tao -> tranh click nhieu lan -->
+            <button (click)="onCreateGroup()" [disabled]="isCreating()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-xl 
+                       hover:bg-blue-700 shadow-md shadow-blue-500/2 
+                       transition-all disabled:opacity-50 disabled: cursor-not-allowed">
+                @if(isCreating()){
+                Creating...
+                }
+                @else {
+                Create Group
+                }
+            </button>
+        </div>
+    </div>
+</div>

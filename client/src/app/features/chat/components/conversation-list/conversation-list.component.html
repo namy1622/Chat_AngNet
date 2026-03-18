@@ -1,1 +1,54 @@
-<p>conversation-list works!</p>
+<!--  -->
+@for(chat of conversations(); track chat.id){
+<!-- routerLink: khi click se truyen den c/{id} -->
+<!-- routerLinkActive: them class khi dang o route nay -->
+<a [routerLink]="['c', chat.id]" routerLinkActive="bg-blue-50 !border-blue-200" #rla="routerLinkActive"
+    (click)="onSelect(chat.id)"
+    class="flex gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-all border border-transparent">
+
+    <!-- avatar -->
+    <div class="relative flex-shrink-0">
+        <app-ui-avatar [src]="chat.avatarUrl" [alt]="chat.name" size="md"
+            [status]="chat.isOnline ? 'online' : 'offline'"></app-ui-avatar>
+    </div>
+
+    <!-- thong tin chat -->
+    @if(isExpanded()){
+    <div class="flex-1 min-w-0">
+        <div class="flex justify-between items-baseline mb-1">
+            <!-- ten conversation -->
+            <h4 class="font-semibold text-gray-800 truncate" [class.text-blue-700]="rla.isActive"
+                [class.text-gray-800]="!rla.isActive">
+                @if(chat.type === 'Group'){
+                <app-ui-icon name="users" [size]="14" class="inline-block mr-1 text-blue-500"></app-ui-icon>
+                }
+                {{ chat.name}}
+            </h4>
+            <!-- time + badge -->
+            <div class="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                <span class="text-xs text-gray-400">{{ chat.lastMessageTime }}</span>
+                <!--BADGE UNREAD — hien so tin chua doc -->
+                @if(chat.unreadCount > 0){
+                <span class="min-w-[20px] h-5 px-1.5 bg-blue-600 text-white text-[11px]
+                     font-bold rounded-full flex items-center justify-center">
+                    {{ chat.unreadCount > 99 ? '99+' : chat.unreadCount }}
+                </span>
+                }
+            </div>
+        </div>
+        <!-- tin nhan -->
+        <p class="text-sm truncate transition-colors" [class.text-blue-600]="rla.isActive"
+            [class.text-gray-500]="!rla.isActive">
+            {{chat.lastMessage}}
+        </p>
+    </div>
+    }
+</a>
+}
+
+<!-- thong bao khi ko co conversation -->
+@if(conversations().length === 0){
+<div class="text-center text-gray-400 text-sm py-8">
+    No conversations found
+</div>
+}

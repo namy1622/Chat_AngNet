@@ -1,11 +1,324 @@
-import { Component } from '@angular/core';
+import { Component, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+// import { map } from 'rxjs';
+import { UiButtonComponent } from "../../../../shared/components/ui-button/ui-button.component";
+import { UiIconComponent } from "../../../../shared/components/ui-icon/ui-icon.component";
+import { map } from 'rxjs';
+import { Router } from '@angular/router';
+import { SidebarService } from "../../../../core/services/sidebar.service";
+import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../../core/services/auth.service';
+import { SignalrService } from '../../../../core/services/signalr.service';
+import { ChatService } from '../../services/chat.service';
+import { MessageDto } from '../../models/message.dto';
+import { ConversationDto } from '../../models/conversation.dto';
+import { GroupMemberDto } from '../../models/group-member.dto';
+import { AddMemberDialogComponent } from '../add-member-dialog/add-member-dialog.component';
+import { ChatHeaderComponent } from "../chat-header/chat-header.component";
+import { GroupMembersPanelComponent } from "../group-members-panel/group-members-panel.component";
+import { ChatInputComponent } from "../chat-input/chat-input.component";
 
 @Component({
   selector: 'app-chat-window',
-  imports: [],
+  imports: [UiButtonComponent, UiIconComponent, CommonModule, AddMemberDialogComponent, ChatHeaderComponent, GroupMembersPanelComponent, ChatInputComponent],
   templateUrl: './chat-window.component.html',
-  styleUrl: './chat-window.component.scss'
+  styleUrl: './chat-window.component.scss',
+  host: {
+    class: 'flex flex-col h-full'
+  }
 })
 export class ChatWindowComponent {
+  // inject ActivateRoute de doc tham so URL (ex: /c/conv-1 -> id = 'conv-1')
+  private route = inject(ActivatedRoute); // 
+  private router = inject(Router) // inject router de chuyen huong
+  sidebarService = inject(SidebarService);
 
+  private authService = inject(AuthService);
+  private signalrService = inject(SignalrService);
+  private chatService = inject(ChatService);
+
+  // 
+  messages = signal<MessageDto[]>([]);
+  showAddMemberDialog = signal<boolean>(false);
+
+  // danh sach tin nhan
+  // messages = signal<Message[]>([]);
+
+  // signal de theo doi conversation Id tu URL
+  conversationId = toSignal(
+    this.route.paramMap.pipe(
+      map(params => params.get('id'))
+    )
+  );
+
+  // lay tham chieu den khung chat (de cuon) va textarea (de resize)
+  // dùng viewChild signal thay vi @ViewChild decorator
+  // nó trả về Signal<ElementRef | underfined>
+  private scrollContainer = viewChild<ElementRef>('scrollContainer');
+  // private chatInput = viewChild<ElementRef>('chatInput');
+
+  // chuyen doi Observable -> Signal
+  // luc nay currentỦe tro thanh 1 signal (giong convéationId)
+  currentUser = toSignal(this.authService.currentUser$);
+
+  // signal luu thong tin conversation dang mo (lay tu sidebardata)
+  // dung de hien thi header: ten, avatar, type, memberCount
+  currentConversation = signal<ConversationDto | null>(null);
+
+  // signal on/off panel danh sach thanh vien
+  showMembersPanel = signal<boolean>(false);
+
+  // signal luu danh sach thanh vien
+  groupMembers = signal<GroupMemberDto[]>([]);
+
+  constructor() {
+    // theo doi su thay doi cua tham so 'id' tren URL
+    // this.route.paramMap.subscribe(params => {
+    //   const conversationId = params.get('id');
+    //   console.log(' -- Conversation ID: ', params.get('id'));
+
+    //   // TODO: goi API lay tin nhan cua cuoc hoi thoai nay
+    // });
+
+    //effect tu chay khi scrollContainer co gia tri (view da render)
+    // hoac khi conversationId thay doi
+    effect(() => {
+      const container = this.scrollContainer()?.nativeElement;
+      const id = this.conversationId(); // phu thuoc id thay doi
+
+      if (container && id) {
+        this.loadMessages(id);
+        this.loadConversationInfo(id); // load info conversation
+
+        // an panel 
+        this.showMembersPanel.set(false);
+
+        // danh dau da doc khi open conversation
+        this.chatService.markAsRead(id).subscribe({
+          next: (count) => {
+            if (count > 0) {
+              console.log(`-- Marked ${count} messages as read`);
+            }
+          }
+        });
+      }
+    });
+    //---
+    // 1. dki listener tin nhan tu server
+    this.signalrService.addReceiveMessageListener((senderId, user, message, conversationId) => {
+      // khi co tin nhan moi -> them vao d.s
+      const newMessage: MessageDto = {
+        id: crypto.randomUUID(), // tam thoi tao Id gia cho tin nhan moi nhat
+        senderId: senderId,
+        senderName: user,
+        content: message,
+        createAt: new Date().toLocaleDateString([], { hour: '2-digit', minute: '2-digit' }),
+        // kiem tra xem id nguoi gui co trung voi id cua minh ko?
+        isMine: senderId.toLowerCase() === this.currentUser()?.id.toLowerCase(),
+        isRead: false
+      };
+
+      this.messages.update(oldMessages => [...oldMessages, newMessage]);
+
+      // scroll xuong duoi cung khi co tin nhan moi
+      setTimeout(() => this.scrollToBottom(), 50);
+    });
+
+    // -- dki listener khi nguoi khac doc tin nhan cua minh
+    // -> update isRead = true cho messages trong conversation do
+    this.signalrService.addMessageReadListener((conversationId, readByUserId) => {
+      // chi update neu dang xem dung conversation do
+      if (conversationId === this.conversationId()) {
+        // update all messages in this conversation as read
+        this.messages.update(msgs =>
+          msgs.map(m => m.isMine ? { ...m, isRead: true } : m)
+        );
+      }
+    });
+  }
+
+  // ham load lay tin nhan
+  loadMessages(conversationId: string) {
+    this.chatService.getMessages(conversationId).subscribe({
+      next: (res) => {
+        console.log(' -- Messages:', res);
+        this.messages.set(res);
+
+        // scroll xuong duoi cung sau khi tai xong
+        setTimeout(() => this.scrollToBottom(), 100);
+      },
+      error: (err) => console.error(' -- Error loading messages:', err)
+    })
+  }
+
+  // ham gui tin nhan
+  onSendMessage(content: string) {
+    // lay value tu input
+    // const textarea = this.chatInput()?.nativeElement;
+
+    // const content = textarea.value?.trim();
+    if (!content) return; // neu chua nhap gi -> return
+
+    const convId = this.conversationId();
+    if (!convId) {
+      alert("Choose a conversation first!");
+      return;
+    }
+
+    console.log(' -- Sending message:', convId, content);
+    // subscribe de thuc hien request gui tin nhan
+    this.chatService.sendMessage(convId, content).subscribe({
+      next: (res) => {
+        console.log(' -- Message sent:', res.messageId)
+        // ko can tu them tin nhan vao list o day,
+        // vi SignalR se ban s.k "ReceiveMessage" khi co tin nhan moi 
+        // -> listener tu update UI
+      },
+      error: (err) => {
+        console.error(' -- Error sending message:', err)
+      }
+    })
+
+    // clear input sau khi gui
+    // textarea.value = '';
+    // this.adjustTextAreaHeight(); // reset chieu cao 
+  }
+
+  //=======
+  // 
+  // khi change conversationId -> load info conversation
+  // cach don gian: tim trong danh sach conversations da load o sidebar
+  // or: load lai tu api getConversations -> tim theo id
+  loadConversationInfo(conversationId: string) {
+    //
+    this.chatService.getConversationById(conversationId).subscribe({
+      next: (conversation) => {
+        this.currentConversation.set(conversation);
+      },
+      error: (err) => console.error(' -- Error loading conversation:', err)
+    });
+  }
+
+  //toggle panel thanh vien (bat/tat)
+  onToggleMembersPanel() {
+    const convId = this.conversationId();
+    if (!convId) return;
+
+    // neu dang an -> hien + load danh sach thanh vien
+    if (!this.showMembersPanel()) {
+      this.chatService.getGroupMembers(convId).subscribe({
+        next: (members) => {
+          this.groupMembers.set(members);
+          this.showMembersPanel.set(true);
+        },
+        error: (err) => console.error('-- Error loading members:', err)
+      });
+    }
+    else {
+      this.showMembersPanel.set(false);
+    }
+  }
+
+  // roi nhom
+  onLeaveGroup() {
+    const convId = this.conversationId();
+    if (!convId) return;
+
+    const isConfirm = confirm('Are you sure you want to leave this group?');
+    if (!isConfirm) return;
+
+    this.chatService.leaveGroup(convId).subscribe({
+      next: () => {
+        console.log('-- Left group successfully');
+        // navigate ve trang chinh (ko chon conversation nao)
+        this.router.navigate(['/']);
+
+        // xoa nhóm khoi sidebar
+        // goi lai loadConversations() o sidebar.ts
+        // do sidebar va chat-window la 2 component ngang hang
+        // -> dung window event de bao cho sidebar
+        window.dispatchEvent(new CustomEvent('conversation-left'));
+      },
+      error: (err) => console.error('-- Error leaving group:', err)
+    });
+  }
+  //======
+
+  //======
+  //
+  onOpenAddMemberDialog() {
+    this.showAddMemberDialog.set(true);
+  }
+
+  // 
+  onCloseAddMemberDialog() {
+    this.showAddMemberDialog.set(false);
+  }
+
+  // khi them member success
+  onMembersAdded() {
+    this.showAddMemberDialog.set(false); // dong dialog
+
+    const convId = this.conversationId();
+    if (!convId) return;
+
+    // reload danh sach thanh vien
+    this.chatService.getGroupMembers(convId).subscribe({
+      next: (members) => {
+        this.groupMembers.set(members);
+      }
+    });
+
+    this.loadConversationInfo(convId); // reload conversation info
+  }
+
+  // lay danh sach userId tu groupMembers
+  getExistingMemberIds(): string[] {
+    return this.groupMembers().map(m => m.userId);
+  }
+
+  // ham resize textarea khi  go phim
+  // adjustTextAreaHeight() {
+  //   const textarea = this.chatInput()?.nativeElement;
+  //   if (textarea) {
+  //     textarea.style.height = 'auto';
+  //     textarea.style.height = textarea.scrollHeight + 'px';
+  //   }
+  // }
+
+  // ham back (quay lai man d.s cuoc hoi thoai)
+  goBack() {
+    this.sidebarService.open();
+    // this.router.navigate(['/']) // quay ve trang goc (bo chon conversation)
+  }
+
+  // scroll xuong duoi cung
+  private scrollToBottom() {
+    const container = this.scrollContainer()?.nativeElement;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
 }
+
+/*
+========= Ly Thuyet =========
+
+1. inject() vs constructor:
+    - inject(Service): cach moi (Angular 17+) lay dependency injection gon hom
+    - tuong duong: constructor(private route: ActivatedRoute)
+
+2. ActivatedRoute:
+    - la service cua Angular: cho phep doc thong tin route hien tai
+    - paramMap: Observable chua cac tham so dong (ex: /c/:id)
+
+3. group & group-hover:
+    - Tailwind trick: danh dau the cha la 'group', the con dung 'group-hover' de style khi hover vao the cha
+    => khi hover vao Cha thi con thay doi style 
+
+4. focus-within:
+    - Khi bat ky phan tu con nao duoc focus (ex: texterea), thi the cha ap dung style 
+    - dung de tao hieu ung o input sang len khi user click vao
+
+*/

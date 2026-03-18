@@ -1,0 +1,43 @@
+<div class="absolute right-0 top-16 bottom-0 w-72 bg-white border-l border-gray-100 shadow-lg z-20 overflow-y-auto">
+    <!-- header panel -->
+    <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+        <h4 class="font-semibold text-gray-800">
+            Members: ({{members().length}})
+        </h4>
+        <button (click)="onClose()" class="p-1 hover:bg-gray-100 rounded-full">
+            <app-ui-icon name="X" [size]="18"></app-ui-icon>
+        </button>
+    </div>
+
+    <!-- danh sach thanh vien -->
+    <div class="p-2 space-y-1">
+        @for(member of members(); track member.userId){
+        <div class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50">
+            <img [src]="member.avatarUrl || 'https://ui-avatars.com/api/?name=' + member.userName + '&background=random'"
+                alt="" class="w-9 h-9 rounded-full">
+            <div class="flex-1 min-w-9">
+                <p class="text-sm font-medium text-gray-800 truncate">
+                    {{member.displayName || member.userName}}
+                </p>
+                @if(member.role === 'Owner'){
+                <span class="text-[11px] text-amber-600 font-medium">Owner</span>
+                } @else if(member.role === 'Admin'){
+                <span class="text-[11px] text-blue-600 font-medium">Admin</span>
+                } @else {
+                <span class="text-[11px] text-gray-600 font-medium">Member</span>
+                }
+            </div>
+        </div>
+        }
+    </div>
+
+    <!-- nut them member -->
+    <button (click)="onAddMember()" class="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-blue-50
+                       text-blue-600 transition-colors mt-2">
+        <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center">
+            <app-ui-icon name="plus" [size]="18"></app-ui-icon>
+        </div>
+        <span class="text-sm font-medium">Add Members</span>
+    </button>
+
+</div>

@@ -1,12 +1,16 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import * as signalR from '@microsoft/signalr'; // npm install @microsoft/signalr
 import { BehaviorSubject } from 'rxjs';
+import { AuthService } from './auth.service';
+import { ConversationDto } from '../../features/chat/models/conversation.dto';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SignalrService {
   private hubConnection: signalR.HubConnection | undefined;
+
+  authService = inject(AuthService)
 
   // bien bao hieu status ket noi (online/offline) cho toan app biet
   public connectionStatus$ = new BehaviorSubject<boolean>(false);
@@ -17,6 +21,10 @@ export class SignalrService {
   // ham duoc goi ngay khi user login success
   public startConnection() {
     console.log('--- Bat dau khoi tao ket noi SignalR ---');
+
+    // lay token user login hien tai
+    const token = this.authService.getToken();
+
     // hubConnectionBuilder: cong cu xay dung cau hinh ket noi
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl('/api/chatHub', {
@@ -25,7 +33,8 @@ export class SignalrService {
         // ep dung Websockets luon cho nhan (yc server phai ho tro WS)
         skipNegotiation: true,
         // chi dinh ro s.d giao thuc WS(nhanh nhat, real-time nhat).
-        transport: signalR.HttpTransportType.WebSockets
+        transport: signalR.HttpTransportType.WebSockets,
+        accessTokenFactory: () => token || '' // gui token kem theo connection
       })
       .withAutomaticReconnect() // tu dong ketnoi lai neu rot mang (tang trai nghiem user)
       .build(); // ket thuc cau hinh
@@ -46,13 +55,19 @@ export class SignalrService {
   }
 
   // 2. lang nghe event tu server (ex: co tin nhan moi)
-  // khi server goi: await Clients.All.SendAsync("ReceiveMessage", user, message)
-  // -> ham addReceiveMessageListener se bat duoc event nay va truyen vao 1 cai callback
-  public addReceiveMessageListener(callback: (user: string, message: string) => void) {
-    this.hubConnection?.on('ReceiveMessage', (user, message) => {
-      // goi callback de component xu ly (ex: hien len man hinh)
-      callback(user, message);
-    });
+  // Dki lang nghe su kien "ReceiveMessage" tu server
+  // Update: Nhan them senderId
+  public addReceiveMessageListener(callback: (senderId: string, user: string, message: string, conversationId: string) => void) {
+    this.hubConnection?.on('ReceiveMessage', callback);
+  }
+
+  // listen event "AddedToGroup" tu server
+  // khi duoc them vao 1 group chat -> server gui event AddedToGroup
+  // callback: nhan conversationId
+  addAddedToGroupListener(callback: (conversationId: string) => void) {
+    this.hubConnection?.on('AddedToGroup', (conversationId: string) => {
+      callback(conversationId);
+    })
   }
 
   // 3. gui tin nhan len server (cach1: gui qua socket)
@@ -64,5 +79,12 @@ export class SignalrService {
     console.log('--- Gui tin nhan qua SignalR ---', user, message);
     this.hubConnection?.invoke('SendMessage', user, message)
       .catch(err => console.error(err));
+  }
+
+  //
+  addMessageReadListener(callback: (conversationId: string, readByUserId: string) => void) {
+    this.hubConnection?.on('MessagesRead', (conversationId: string, readByUserId: string) => {
+      callback(conversationId, readByUserId);
+    })
   }
 }
