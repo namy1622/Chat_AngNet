@@ -1,0 +1,68 @@
+<!-- Friend requests panel -->
+
+<!-- header -->
+<div class="px-3 py-2">
+    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        Friend Requests
+        @if(pendingRequests().length > 0){
+        <span class="ml-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+            {{ pendingRequests().length }}
+        </span>
+        }
+    </h3>
+</div>
+
+<!-- status Loading -->
+@if(isLoading()){
+<div class="text-center text-gray-400 text-sm py-4">
+    Loading...
+</div>
+}
+
+<!-- Danh sach loi moi -->
+<!-- track de Angular toi uu DOM -->
+@for(request of pendingRequests(); track request.friendshipId) {
+    <div class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl 
+                hover:bg-gray-50 transition-all">
+        <!-- Avatar nguoi gui loi moi -->
+        <app-ui-avatar
+            [src]="request.avatarUrl || 'https://ui-avatars.com/api/?name=' + request.firstName + '+' + request.lastName"
+            [alt]="request.firstName"
+            size="md">
+        </app-ui-avatar>
+        <!-- Thong tin nguoi gui -->
+        <div class="flex-1 min-w-0">
+            <!-- min-w-0: can thiet de truncate hoat dong trong flex container -->
+            <h4 class="font-semibold text-sm text-gray-800 truncate">
+                {{ request.firstName + ' ' + request.lastName }}
+            </h4>
+            <p class="text-xs text-gray-400">wants to be friends</p>
+        </div>
+        <!-- Nut Accept / Reject -->
+        <div class="flex gap-1.5 flex-shrink-0">
+            <!-- flex-shrink-0: khong cho phep buttons bi thu nho khi het cho -->
+            
+            <!-- Nut Accept (v): mau xanh -->
+            <button (click)="onAccept(request)"
+                class="p-1.5 bg-green-50 text-green-600 rounded-full 
+                       hover:bg-green-100 transition-colors"
+                title="Accept">
+                <app-ui-icon name="check" [size]="16"></app-ui-icon>
+            </button>
+            <!-- Nut Reject (x): mau do -->
+            <button (click)="onReject(request)"
+                class="p-1.5 bg-red-50 text-red-500 rounded-full 
+                       hover:bg-red-100 transition-colors"
+                title="Reject">
+                <app-ui-icon name="x" [size]="16"></app-ui-icon>
+            </button>
+        </div>
+    </div>
+}
+<!-- Trang thai rong: ko co loi moi nao -->
+@if(!isLoading() && pendingRequests().length === 0) {
+    <div class="text-center text-gray-400 text-sm py-6">
+        <app-ui-icon name="inbox" [size]="32" class="mx-auto mb-2 opacity-50"></app-ui-icon>
+        <p>No pending requests</p>
+    </div>
+}

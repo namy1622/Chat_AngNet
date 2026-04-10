@@ -72,7 +72,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("ReceiverId");
 
-                    b.ToTable("CallSessions");
+                    b.ToTable("CallSessions", (string)null);
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.Conversation", b =>
@@ -110,7 +110,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("LastMessageId");
 
-                    b.ToTable("Conversations");
+                    b.ToTable("Conversations", (string)null);
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.ConversationParticipant", b =>
@@ -152,7 +152,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ConversationParticipants");
+                    b.ToTable("ConversationParticipants", (string)null);
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.Friendship", b =>
@@ -188,7 +188,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("RequesterId");
 
-                    b.ToTable("Friendships");
+                    b.ToTable("Friendships", (string)null);
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.Message", b =>
@@ -235,7 +235,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Messages");
+                    b.ToTable("Messages", (string)null);
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.MessageReaction", b =>
@@ -262,7 +262,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("MessageReactions");
+                    b.ToTable("MessageReactions", (string)null);
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.MessageReadState", b =>
@@ -280,7 +280,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("MessageReadStates");
+                    b.ToTable("MessageReadStates", (string)null);
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.Notification", b =>
@@ -321,7 +321,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.User", b =>
@@ -376,7 +376,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.UserDevice", b =>
@@ -405,7 +405,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserDevices");
+                    b.ToTable("UserDevices", (string)null);
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.CallSession", b =>

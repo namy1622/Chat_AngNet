@@ -16,10 +16,20 @@ import { SignalrService } from '../../../../core/services/signalr.service';
 import { CreateGroupDialogComponent } from "../create-group-dialog/create-group-dialog.component";
 import { ConversationListComponent } from '../conversation-list/conversation-list.component';
 import { List } from 'lucide-angular';
+import { FriendsListPanelComponent } from '../friends-list-panel/friends-list-panel.component';
+import { FriendRequestsPanelComponent } from '../friend-requests-panel/friend-requests-panel.component';
+import { FriendshipService } from '../../../../core/services/friendship.service';
+import { FriendshipStatusDto } from '../../models/friendship.dto';
+import { count } from 'rxjs';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [CommonModule, RouterLink, RouterLinkActive, UiButtonComponent, UiIconComponent, UiAvatarComponent, CreateGroupDialogComponent, ConversationListComponent], // dung de tao link va highlight link dang active
+  imports: [CommonModule, RouterLink, RouterLinkActive,
+    UiButtonComponent, UiIconComponent, UiAvatarComponent,
+    CreateGroupDialogComponent, ConversationListComponent,
+    FriendsListPanelComponent,
+    FriendRequestsPanelComponent
+  ], // dung de tao link va highlight link dang active
   standalone: true,
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
@@ -55,6 +65,22 @@ export class SidebarComponent {
   // result tim kiem
   foundUsers = signal<UserDto[]>([]);
 
+  // -- friendship --
+  friendshipService = inject(FriendshipService);
+
+  activeTab = signal<'chats' | 'friends'>('chats');
+  // signal luu so loi moi ket ban (badge)
+  pendingRequestCount = signal(0);
+  // siganl luu status friendship user dang search
+  // key: userId, value: FriendshipStatusDto
+  // Map de luu nhieu user cung luc (search nhieu ket qua)
+  friendshipStatuses = signal<Map<string, FriendshipStatusDto>>(new Map());
+
+  // -- signal Trigger --
+  // == Ly Thuyet Trigger Pattern -> cuoi file ==
+  friendRequestReloadTrigger = signal(0);
+  friendsListReloadTrigger = signal(0);
+
   constructor() {
     this.loadConversations();
 
@@ -71,7 +97,7 @@ export class SidebarComponent {
               return {
                 ...c,
                 lastMessage: content,
-                lastMessageTime: 'Just now',
+                lastMessageTime: c.lastMessageTime, // just now
                 unreadCount: window.location.pathname.includes(conversationId)
                   ? c.unreadCount // dang xem -> giu nguyen (auto markRead)
                   : c.unreadCount + 1 // ko xem -> tang 1
@@ -101,6 +127,53 @@ export class SidebarComponent {
       console.log('-- conversation-left event received');
       this.loadConversations();
     })
+
+    // === Friendship: lang nghe event loi moi ket ban moi qua SignalR ===
+    this.signalrService.addFriendRequestReceivedListener((data) => {
+      console.log('-- new friend request from:', data.requesterId);
+      this.pendingRequestCount.update(count => count + 1);
+
+      // friend-request-panel co input reloadTrigger 
+
+      this.friendRequestReloadTrigger.update(v => v + 1);
+    });
+
+    // -- listener khi loi moi duoc Respond(Accept/Reject) --
+    // update friendshipStatuses Map (Pending -> Accepted/Rejected)
+    // lang nghe khi loi moi respond (Accepted/Rejected)
+    this.signalrService.addFriendRquestRespondedListener((data) => {
+      console.log('-- friend request responded:', data);
+
+      // update friendshipStatuses Map
+      // Tim trong Map: co friendship nao co id = data.friendshipId ko?
+      this.friendshipStatuses.update(map => {
+        const newMap = new Map(map);
+
+        // duyet Map tim friendshipId khop 
+        // -> map luu theo key: userId, nen phai duyet tim
+        newMap.forEach((status, userId) => {
+          if(status.friendshipId === data.friendshipId){
+            // update status: 'Pending' -> 'Accepted/Rejected'
+            newMap.set(userId, {
+              ... status, 
+              status: data.isAccepted ? 'Accepted' : 'Rejected'
+            });
+          }
+        });
+        return newMap;
+      });
+      
+      if(data.isAccepted){
+        this.friendsListReloadTrigger.update(v => v + 1);
+
+        // Cach ViewChild - de hoc them
+        // this.friendListPanel?.loadFriends();
+      }
+      
+    })
+
+    // - load pendingCount tu dau
+    this.loadPendingCount();
   }
   //
   loadConversations() {
@@ -179,6 +252,8 @@ export class SidebarComponent {
 
   //---------
 
+
+
   // ham event khi go phim
   onSearch(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -205,6 +280,11 @@ export class SidebarComponent {
         const otherUsers = users.filter(u => u.id != myselfId);
 
         this.foundUsers.set(otherUsers);
+
+        // check trang thai ket ban voi tung user tim thay
+        otherUsers.forEach(user => {
+          this.checkFriendshipStatus(user.id);
+        })
       }
     });
   }
@@ -230,29 +310,83 @@ export class SidebarComponent {
     })
   }
 
-  /*
-    cach dung output event thay cho router
-    conversationCreated = output<string>(); // khai bao output
-    
-    onUserClick_Alternative(user: UserDto){
-      this.chatService.createConversation(user.id).subscribe({
-        // thay vi navigate, ta ban event ra ngoai cho Component cha (MainLayout) xu ly
-        this.conversationCreated.emit(conversationId);
-
-        // reset UI
-        this.searchQuery.set('');
-        this.isSearchingMode.set(false);
-        this.loadConversations();
-      })
-    }
-  */
-
   // ham logout
   onLogout() {
     const isConfirm = confirm('Are you sure you want to log out?');
     if (isConfirm) {
       this.authService.logout();
     }
+  }
+
+  // == Friendship Methods === 
+  // load pending friend requests count
+  loadPendingCount() {
+    this.friendshipService.getPendingRequests().subscribe({
+      next: (requests) => {
+        this.pendingRequestCount.set(requests.length);
+      }
+    });
+  }
+
+  // chuyen tab: chat <-> friend
+  // dung de toggle noi dung sidebar
+  switchTab(tab: 'chats' | "friends") {
+    this.activeTab.set(tab);
+  }
+
+  // khi count request friendship thay doi -> tu friend-requests-panel emit ra
+  onRequestCountChanged(count: number) {
+    this.pendingRequestCount.set(count);
+  }
+
+  // khi friend-requests-panel emit 'friendAccepted'
+  onFriendAccepted(){
+    console.log('-- [SideBar] friend accepteed -> reload friends list');
+
+    // signal trigger -> tang value -> effect() torng friends-list-panel chay 
+    this.friendsListReloadTrigger.update(v => v + 1);
+  }
+
+  // == add Friend khi Search ==
+  checkFriendshipStatus(userId: string) {
+    this.friendshipService.getFriendshipStatus(userId).subscribe({
+      next: (status) => {
+        // update Map: them userId -> status
+        this.friendshipStatuses.update(map => {
+          const newMap = new Map(map);
+          newMap.set(userId, status);
+          return newMap;
+        });
+      }
+    });
+  }
+
+  // lay status friendship cua 1 user (tu Map da load)
+  getFriendshipStatus(userId: string): FriendshipStatusDto | undefined {
+    return this.friendshipStatuses().get(userId);
+  }
+
+  // gui loi moi ket ban
+  onAddFriend(userId: string) {
+    this.friendshipService.sendFriendRequest(userId).subscribe({
+      next: (result) => {
+        console.log('-- sent friend request:', result.friendshipId);
+        // update status = Pending trong Map
+        this.friendshipStatuses.update(map => {
+          const newMap = new Map(map);
+          newMap.set(userId, {
+            friendshipId: result.friendshipId,
+            status: 'Pending',
+            isRequester: true // minh la nguoi gui
+          });
+          return newMap;
+        });
+      },
+      error: (err) => {
+        console.error('-- failed to send friend request:', err);
+        alert('Failed to send friend request');
+      }
+    })
   }
 }
 
@@ -275,3 +409,56 @@ export class SidebarComponent {
     - truncate: cat text dai + them '...'. Can min-w-0 o the cha de hoat dong
     - flex-shrink-0: ngan phan tu bi thu nho khi ko du cho
 */
+
+//----------------------------------------------
+  /*
+    cach dung output event thay cho router
+    conversationCreated = output<string>(); // khai bao output
+    
+    onUserClick_Alternative(user: UserDto){
+      this.chatService.createConversation(user.id).subscribe({
+        // thay vi navigate, ta ban event ra ngoai cho Component cha (MainLayout) xu ly
+        this.conversationCreated.emit(conversationId);
+
+        // reset UI
+        this.searchQuery.set('');
+        this.isSearchingMode.set(false);
+        this.loadConversations();
+      })
+    }
+  */
+
+//----------------------------------------------
+/**
+ * === Ly Thuyet Trigger Pattern ===
+ * - La 1 pattern trong Angular de giao tiep cha -> con
+ *    - Cha giu 1 signal(number), truyen vao con qua [input]
+ *    - Moi khi can bao con reload -. cha tang value len 1
+ *    - Con dung effect() theo doi input -> khi thay doi -> goi API reload
+ *    - Gia tri cu the (1,2,3,..) ko quan trong -> chi can No Thay Doi la du
+ * 
+ * Tai sao ko dung boolean
+ *    - Vi set(true) -> set(true) lan 2 -> signal ko thay doi 
+ *    -> effect() ko chay lai. Dung number(tang 1 moi lan) dam bao luon thay doi 
+ * 
+ * --------------------------------------------------------------------
+ * === Cach 1: ViewChild ===
+ * - ViewChild: cho phep lay Truc Tiep reference toi component con
+ * - Sau do goi method cua con: this.friendRequestsPanel.loadPendingRequests();
+ * 
+ * === Ly Thuyet ViewCHild ===
+ * - @ViewChild('tenRef') hoac @ViewChild(ComponentClass)
+ * - Angular se tim component con trong template va an vao bien nay
+ * - Chi co gia tri Sau khi view duoc render (ngAfterViewInit)
+ * - Dung de truy cap properties/methods cua component con
+ * - Nhuoc: 'tight coupling' - cha phu thuoc truc tiep vao con
+ * 
+ * -------------------------------
+ * 
+ * // Cach dung (trong SignalR listener):
+  // this.friendRequestsPanel?.loadPendingRequests();  // goi truc tiep method con
+  // this.friendsListPanel?.loadFriends();             // goi truc tiep method con
+  //
+  // Luu y: Phai co dau ? (optional chaining) vi component con co the chua ton tai
+  // (VD: dang o tab Chats → FriendsListPanel bi destroy boi @if → ViewChild = undefined)
+ */

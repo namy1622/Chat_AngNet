@@ -1,0 +1,75 @@
+<!-- FRIENDS LIST PANEL -->
+
+<!-- Header -->
+<div class="px-3 py-2">
+    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        My Friends
+        @if(friends().length > 0) {
+            <span class="ml-1 text-gray-500">({{ friends().length }})</span>
+        }
+    </h3>
+</div>
+
+<!-- Loading -->
+@if(isLoading()) {
+    <div class="text-center text-gray-400 text-sm py-4">
+        Loading...
+    </div>
+}
+
+<!-- Danh sach ban be -->
+@for(friend of friends(); track friend.friendshipId) {
+    <div class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl 
+                hover:bg-gray-50 transition-all group">
+        <!-- 
+            class "group": Tailwind utility
+            Cho phep cac the con dung "group-hover:" de thay doi khi HOVER the cha
+            VD: nut "Chat" chi hien khi hover dong ban be
+        -->
+        <!-- Avatar ban be voi trang thai online/offline -->
+        <app-ui-avatar
+            [src]="friend.avatarUrl || 'https://ui-avatars.com/api/?name=' + friend.firstName + '+' + friend.lastName"
+            [alt]="friend.firstName"
+            size="md"
+            [status]="friend.isOnline ? 'online' : 'offline'">
+        </app-ui-avatar>
+        <!-- Thong tin ban be -->
+        <div class="flex-1 min-w-0">
+            <h4 class="font-semibold text-sm text-gray-800 truncate">
+                {{ friend.firstName + ' ' + friend.lastName }}
+            </h4>
+            <!-- Hien trang thai online/offline -->
+            <p class="text-xs" 
+               [class.text-green-500]="friend.isOnline"
+               [class.text-gray-400]="!friend.isOnline">
+                {{ friend.isOnline ? 'Online' : 'Offline' }}
+            </p>
+        </div>
+        <!-- Nhom nut hanh dong -->
+        <!-- opacity-0 group-hover:opacity-100: an di, chi hien khi hover dong -->
+        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+            <!-- Nut Chat: mo conversation -->
+            <button (click)="onChatWithFriend(friend)"
+                class="p-1.5 bg-blue-50 text-blue-600 rounded-full 
+                       hover:bg-blue-100 transition-colors"
+                title="Chat">
+                <app-ui-icon name="message-circle" [size]="16"></app-ui-icon>
+            </button>
+            <!-- Nut Unfriend: xoa ban -->
+            <button (click)="onRemoveFriend(friend)"
+                class="p-1.5 bg-red-50 text-red-400 rounded-full 
+                       hover:bg-red-100 transition-colors"
+                title="Unfriend">
+                <app-ui-icon name="user-minus" [size]="16"></app-ui-icon>
+            </button>
+        </div>
+    </div>
+}
+<!-- Trang thai rong -->
+@if(!isLoading() && friends().length === 0) {
+    <div class="text-center text-gray-400 text-sm py-8">
+        <app-ui-icon name="users" [size]="32" class="mx-auto mb-2 opacity-50"></app-ui-icon>
+        <p>No friends yet</p>
+        <p class="text-xs mt-1">Search and add friends to get started!</p>
+    </div>
+}

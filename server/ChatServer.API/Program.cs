@@ -27,12 +27,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication(); // Them Authentication Middleware
 app.UseAuthorization();
 
 app.MapControllers();
 
 // dinh tuyen hub
-// client se ket noi vao duong dan: https://localhost:44372/chatHub
-app.MapHub<ChatServer.API.Hubs.ChatHub>("/chatHub");
+// client se ket noi vao duong dan: https://localhost:44372/api/chatHub
+app.MapHub<ChatServer.API.Hubs.ChatHub>("/api/chatHub");
 
 app.Run();

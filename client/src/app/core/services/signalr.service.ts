@@ -87,4 +87,25 @@ export class SignalrService {
       callback(conversationId, readByUserId);
     })
   }
+
+  // === Friendship Events ===
+
+  // lang nghe khi co loi moi ket ban moi
+  // server gui event "FriendRequestReceived" khi ai do gui loi moi cho minh
+  addFriendRequestReceivedListener(
+    callback: (data: { friendshipId: string, requesterId: string; reuquesterName: string }) => void) {
+    this.hubConnection?.on('FriendRequestReceived', (data) => {
+      callback(data);
+    });
+  }
+
+  // lang nghe khi loi moi ket ban duoc phan hoi (accept/reject)
+  // server gui event "FriendRequestResponded" khi nguoi nhan respond
+  addFriendRquestRespondedListener(
+    callback: (data: { friendshipId: string; isAccepted: boolean; responderId: string }) => void) {
+    this.hubConnection?.on('FriendRequestRespond', (data) => {
+      callback(data);
+    });
+  }
+
 }

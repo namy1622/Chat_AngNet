@@ -58,7 +58,34 @@
 </div>
 
 @if (sidebarService.isCollapsed()){
-<!-- o tim kiem  -->
+
+<div class="flex border-b border-gray-100">
+    <!-- tab chat -->
+    <button (click)="switchTab('chats')"
+        class="flex-1 py-3 text-sm font-medium text-center transition-colors border-b-2"
+        [class.border-blue-500]="activeTab() === 'chats'" [class.text-blue-600]="activeTab() === 'chats'"
+        [class.border-transparent]="activeTab() !== 'chats'" [class.text-gray-500]="activeTab() !== 'chats'">
+        <app-ui-icon name="message-circle" [size]="16" class="inline mr-1"></app-ui-icon>
+        Chats
+    </button>
+    <!-- tab Friends -->
+    <button (click)="switchTab('friends')"
+        class="flex-1 py-3 text-sm font-medium text-center transition-colors border-b-2 relative"
+        [class.border-blue-500]="activeTab() === 'friends'" [class.text-blue-600]="activeTab() === 'friends'"
+        [class.border-transparent]="activeTab() !== 'friends'" [class.text-gray-500]="activeTab() !== 'friends'">
+        <app-ui-icon name="user" [size]="16" class="inline mr-1"></app-ui-icon>
+        Friends
+        <!-- badge count -->
+        @if(pendingRequestCount() > 0){
+        <span
+            class="absolute -top-0.5 right-3 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+            {{ pendingRequestCount() }}
+        </span>
+        }
+    </button>
+</div>
+<!-- o tim kiem - chi hien khi tab Chats-->
+@if(activeTab() === 'chats'){
 <div class="px-4 py-3">
     <div class="relative">
         <!-- icon kinh lup -->
@@ -69,11 +96,14 @@
     </div>
 </div>
 }
+}
 
 
 <!-- Danh sach cuoc tro truyen (Conversation) -->
 <!-- overflow-y-auto: cuon doc khi danh sach dai -->
 <div class="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+    <!-- === tab chats === -->
+    @if(activeTab() === 'chats'){
     <!-- case dang tim user (searching) -->
     @if(isSearchingMode()){
     <div class="px-2 py-2 text-xs font-semibold text-gray-400 uppsercase tracking-wider">
@@ -82,23 +112,56 @@
 
     <!-- Duyet qua list user tim thay -->
     @for(user of foundUsers(); track user.id){
-    <div (click)="onUserClick(user)"
-        class="flex gap-3 p-3 rounded-xl hover:bg-gray-100 cursor-pointer transition-all items-center">
+    <div class="flex gap-3 p-3 rounded-xl hover:bg-gray-100 cursor-pointer transition-all items-center">
 
         <!-- avatar -->
         <app-ui-avatar [src]="user.avatarUrl" [alt]="user.firstName" size="md"
             [status]="user.isOnline ? 'online' : 'offline'">
         </app-ui-avatar>
         <!-- ten username -->
-        <div class="flex-1 min-w-0">
+        <div class="flex-1 min-w-0" (click)="onUserClick(user)">
             <h4 class="font-semibold text-gray-800 truncate">
                 {{ user.firstName + '' + user.lastName }}
             </h4>
             <p class="text-xs text-blue-500">{{ user.userName }}</p>
         </div>
-        <button class="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100">
-            <app-ui-icon name="plus" [size]="16"></app-ui-icon>
+        <!-- nut add friend -->
+        <!-- theo status: none, pending(requester) = true/false, accepted -->
+        @if(getFriendshipStatus(user.id); as status){
+        @if(status.status === 'Accepted'){
+        <span class="px-2.5 py-1 bg-green-50 text-green-600 text-xs rounded-full font-medium flex items-center gap-1">
+            <app-ui-icon name="check" [size]="12"></app-ui-icon>
+            <span>Friend</span>
+        </span>
+        }
+        @else if (status.status === 'Pending' && status.isRequester) {
+        <span class="px-2.5 py-1 bg-yellow-50 text-yellow-600 text-xs rounded-full font-medium">
+            Pending...
+        </span>
+        }
+        @else if (status.status === 'Pending' && !status.isRequester) {
+        <button (click)="onAddFriend(user.id)"
+            class="px-2 py-1 bg-green-50 text-green-600 text-xs rounded-full font-medium hover:bg-green-100 transition-colors">
+            Accept
         </button>
+        }
+        @else {
+        <button (click)="onAddFriend(user.id)"
+            class="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors" title="Add Friend">
+            <app-ui-icon name="user-plus" [size]="16"></app-ui-icon>
+        </button>
+        }
+        }
+        @else {
+        <!--  chua load xong status -> hien nut default -->
+        <button (click)="onAddFriend(user.id)"
+            class="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors" title="Add Friend">
+            <app-ui-icon name="user-plus" [size]="16"></app-ui-icon>
+        </button>
+        }
+        <!-- <button class="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100">
+            <app-ui-icon name="plus" [size]="16"></app-ui-icon>
+        </button> -->
     </div>
     }
     <!-- ko tim thay ai -->
@@ -113,6 +176,19 @@
         (conversationSelected)="onConversationSelected($any($event))">
     </app-conversation-list>
     }
+    }
+    @else if(activeTab() === 'friends'){
+    <!-- panel loi moi ket ban -->
+    <app-friend-requests-panel [reloadTrigger]="friendRequestReloadTrigger()"
+        (requestCountChanged)="onRequestCountChanged($event)" (friendAccepted)="onFriendAccepted()">
+    </app-friend-requests-panel>
+    <!-- duong ke ngang -->
+    <div class="border-t border-gray-100 my-2 mx-3"></div>
+    <!-- panel danh sach ban be -->
+    <app-friends-list-panel [reloadTrigger]="friendsListReloadTrigger()"></app-friends-list-panel>
+
+    }
+
 
     <!-- dialog tao group -->
     <!-- chi hien khi showCreateGroupDialog = true -->

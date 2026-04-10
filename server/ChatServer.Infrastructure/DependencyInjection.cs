@@ -6,7 +6,7 @@ using ChatServer.Infrastructure.Persitence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-
+//using Microsoft.AspNetCore.Authentication.JwtBearer;
 namespace ChatServer.Infrastructure
 {
     public static class DependencyInjection
@@ -43,6 +43,46 @@ namespace ChatServer.Infrastructure
 
             // dki ChatDbContext de su dung trong Application
             services.AddScoped<IChatContext>(provider => provider.GetRequiredService<ChatDbContext>());
+
+            //----------------------------------------------
+            // Cấu hình Authentication (JWT)
+            // Phải cài đặt Package: Microsoft.AspNetCore.Authentication.JwtBearer
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                var jwtSettings = configuration.GetSection(JwtSetting.SectionName).Get<JwtSetting>();
+
+                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidAudience = jwtSettings.Audience,
+                    IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                        System.Text.Encoding.UTF8.GetBytes(jwtSettings.Secret))
+                };
+
+                // Cấu hình để lấy Token từ Query String cho SignalR
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/api/chatHub"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+            });
 
             return services;
         }

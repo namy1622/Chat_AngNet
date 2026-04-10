@@ -1,0 +1,333 @@
+﻿using ChatServer.API.DTO.Chat;
+using ChatServer.API.Hubs;
+using ChatServer.Application.Chat.Commands.Conversation.CreateConversation;
+using ChatServer.Application.Chat.Commands.Conversation.CreateMessage;
+using ChatServer.Application.Chat.Commands.Conversation.MarkMessagesAsRead;
+using ChatServer.Application.Chat.Commands.Groups.AddGroupMember;
+using ChatServer.Application.Chat.Commands.Groups.CreateGroupConversation;
+using ChatServer.Application.Chat.Commands.Groups.LeaveGroup;
+using ChatServer.Application.Chat.Queries.Chat.GetConversationById;
+using ChatServer.Application.Chat.Queries.Chat.GetConversations;
+using ChatServer.Application.Chat.Queries.Chat.GetGroupMembers;
+using ChatServer.Application.Chat.Queries.Chat.GetMessages;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+
+// noi Client se goi vao (thay vi goi truc tiep SignalR Hub)
+// Nhan Request tu Client (ConversationId, Content)
+// Gui lenh CreateMessageCommand cho MediatR -> luu vao db
+// Neu luu thanh cong -> Dung IHubContext ban tin nha cho all Client 
+
+namespace ChatServer.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize] // bat buoc phai dang nhap moi goi API
+    public class ChatController : ControllerBase
+    {
+        private readonly IMediator _mediator;
+        private readonly IHubContext<ChatHub> _chatHubContext;
+
+        public ChatController(IMediator mediator, IHubContext<ChatHub> chatHubContext)
+        {
+            _mediator = mediator;
+            _chatHubContext = chatHubContext;
+        }
+
+        //[HttpPost("send")]
+        //public async Task<IActionResult> SendMessage([FromBody] CreateMessageRequest request)
+        //{
+        //    try 
+        //    {
+        //        // 1. lay userId tu token (claim "sub")
+        //        // Luu y: Mac dinh .NET co the map "sub" -> ClaimTypes.NameIdentifier
+        //       var senderId = GetUserIdFromToken();
+
+        //        if (string.IsNullOrEmpty(senderId.ToString())) return Unauthorized("User ID not found in token");
+
+        //        // 2. lay userName tu token (claim "name") 
+        //        var senderName = User.FindFirst("UserName")?.Value ?? "Anonymous";
+
+        //        // 3. tao Command gui cho Application layer
+        //        var command = new CreateMessageCommand(request.ConversationId, request.Content, senderId);
+
+        //        // goi mediator -> cho handler chay -> tra ve messageId
+        //        var messageId = await _mediator.Send(command);
+
+        //        // 4. sau khi luu thanh cong -> ban signalR cho client
+        //        // Update: Gui ca SenderId de Client biet tin nhan cua ai
+        //        await _chatHubContext.Clients.All.SendAsync("ReceiveMessage", senderId, senderName, request.Content);
+
+        //        return Ok(new { messageId = messageId });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // [DEBUG] Tra ve loi chi tiet de debug
+        //        return StatusCode(500, new { Error = ex.Message, StackTrace = ex.ToString() });
+        //    }
+        //}
+        [HttpPost("send")]
+        public async Task<IActionResult> SendMessage([FromBody] CreateMessageRequest request)
+        {
+            try 
+            {
+                // 1. lay userId tu token (claim "sub")
+                // Luu y: Mac dinh .NET co the map "sub" -> ClaimTypes.NameIdentifier
+               var senderId = GetUserIdFromToken();
+
+                if (string.IsNullOrEmpty(senderId.ToString())) return Unauthorized("User ID not found in token");
+
+                // 2. lay userName tu token (claim "name") 
+                var senderName = User.FindFirst("UserName")?.Value ?? "Anonymous";
+
+                // 3. tao Command gui cho Application layer
+                var command = new CreateMessageCommand(request.ConversationId, request.Content, senderId);
+
+                // goi mediator -> cho handler chay -> tra ve messageId
+                var messageId = await _mediator.Send(command);
+
+                // chi gui SignalR cho client trong conversation
+                // o day lam don gian: gui cho CurrentUser va TargetUser 
+                // thuc te nen query lay list participant cua conversation roi gui tung nguoi
+
+                // tam thoi dam bao gui 1-1 (sender va receiver) truoc
+                // client phai gui kem TargetUserId trong request  - hoac query db lay ra 
+
+                // cach tam thoi: ban tin nhan test duoc luon ma ko can sua nhieu logic
+                // dung Clients.All truoc (logic lau participant phuc tap hon chut)
+                // De lam chuan can Controller can biet ai la nguoi nhan (targetUser)
+
+                // tam thoi giu nguyen SendAsync cho All (buoc 1 setup ow tren la quan trong nhat)
+
+                //----------------------------------
+                // lay list member cua conversation 
+                // tuy cach ban query -> o day dung IChatContext 
+                // se co cach khac : tao query GetConversationParticipantsQuery -> tra ve list userId -> gui tung nguoi
+                // (co the tao query rieng cho viec nay)
+                // ban mess cho tung member (tru sender) qua group rieng cu ho
+                // thay vi Clients.All -> chi gui nhung nguoi lien quan (tru sender) -> Clients.Group(conversationId.ToString())
+
+                var participants = await _mediator.Send(new GetConversationParticipantsQuery(request.ConversationId));
+
+                foreach(var paticipantId in participants)
+                {
+                    await _chatHubContext.Clients
+                        .Group($"user_{paticipantId}")
+                        .SendAsync("ReceiveMessage", senderId.ToString(), senderName, request.Content, request.ConversationId.ToString());
+                }
+                // them conversationId vao payload de Frontend biet tin nhan thuoc conversation nao
+
+                // 4. sau khi luu thanh cong -> ban signalR cho client
+                // Update: Gui ca SenderId de Client biet tin nhan cua ai
+                //await _chatHubContext.Clients.All.SendAsync("ReceiveMessage", senderId, senderName, request.Content);
+
+                return Ok(new { messageId = messageId });
+            }
+            catch (Exception ex)
+            {
+                // [DEBUG] Tra ve loi chi tiet de debug
+                return StatusCode(500, new { Error = ex.Message, StackTrace = ex.ToString() });
+            }
+        }
+
+        // api lay danh sach conversation
+        [HttpGet("conversations")]
+        public async Task<IActionResult> GetConversations()
+        {
+            var userId = GetUserIdFromToken();
+
+            if (string.IsNullOrEmpty(userId.ToString())) return Unauthorized("User ID not found in token");
+
+            // gui Query cho MediatR xu ly -> tra ve danh sach conversation
+            var query = new GetUserConversationsQuery(userId);
+            var result = await _mediator.Send(query);
+
+            return Ok(result);
+        }
+
+        // get: /api/chat/conversations/{conversationId}
+        // get info 1 conversation theo Id (toi uu hon load toan bo list)
+        [HttpGet("conversations/{conversationId}")]
+        public async Task<IActionResult> GetConversationById(Guid conversationId)
+        {
+            var userId = GetUserIdFromToken();
+
+            if (string.IsNullOrEmpty(userId.ToString())) return Unauthorized("User Id not found in token");
+
+            var query = new GetConversationByIdQuery(conversationId, userId);
+            var result = await _mediator.Send(query);
+
+            if (result == null) return NotFound("Conversation not found or you don't have access");
+
+            return Ok(result);
+        }
+
+        // api lay lich su tin nhan cua conversation
+        [HttpGet("{conversationId}/messages")]
+        public async Task<IActionResult> GetMessages(Guid conversationId)
+        {
+            var userId = GetUserIdFromToken();
+
+            if (string.IsNullOrEmpty(userId.ToString())) return Unauthorized("User ID not found in token");
+
+            var query = new GetMessagesQuery(conversationId, userId);
+            var result = await _mediator.Send(query);
+
+            return Ok(result);
+        }
+
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateConversation([FromBody] CreateConversationRequest request)
+        {
+            var userId = GetUserIdFromToken();
+
+            if (string.IsNullOrEmpty(userId.ToString())) return Unauthorized();
+
+            // gui command
+            var command = new CreateConversationCommand(request.TargetUserId, userId);
+            var conversationId = await _mediator.Send(command);
+
+            return Ok(conversationId);
+        }
+
+        #region Group Chat Endpoints
+        //=== Group Chat Endpoints ===
+        //============================
+
+        [HttpPost("create-group")]
+        public async Task<IActionResult> CreateGroupConversation([FromBody] CreateGroupRequest request)
+        {
+            var userId = GetUserIdFromToken();
+
+            if (string.IsNullOrEmpty(userId.ToString())) return Unauthorized();
+
+            var command = new CreateGroupConversationCommand(
+                request.Name,
+                request.MemberIds,
+                userId
+                );
+            var conversationId = await _mediator.Send(command);
+
+            // === GỬI SIGNALR THÔNG BÁO CHO TẤT CẢ MEMBER ===
+            // Các member được mời vào nhóm → nhận event → reload sidebar
+            foreach (var memberId in request.MemberIds)
+            {
+                await _chatHubContext.Clients
+                    .Group($"user_{memberId}")
+                    .SendAsync("AddedToGroup", conversationId.ToString());
+            }
+
+            return Ok(conversationId);
+        }
+
+        // Post: /api/chat/{conversationId}/members
+        [HttpPost("{conversationId}/members")]
+        public async Task<IActionResult> AddGroupMembers(Guid conversationId, [FromBody] AddMembersRequest request)
+        {
+            var userId = GetUserIdFromToken();
+            if(string.IsNullOrEmpty(userId.ToString())) return Unauthorized();
+
+            var command = new AddGroupMemberCommand(conversationId, request.MemberIds, userId);
+
+            var result = await _mediator.Send(command);
+
+            // -- gui signalR thong bao cho Member moi --
+            // moi member moi duoc them -> gui event AddedToGroup 
+            // FE cua member lang nghe event -> reload sidebar
+            foreach(var newMemberId in request.MemberIds)
+            {
+                await _chatHubContext.Clients
+                    .Group($"user_{newMemberId}")
+                    .SendAsync("AddedToGroup", conversationId.ToString());
+            }
+            // conversationId gui kem de FE biet them vao groupChat nao
+
+            return Ok(result);
+        }
+
+        // API: /api/chat/{conversationId}/leave 
+        // ko can body - chi can biet ai dang request -> lay tu token
+        [HttpDelete("{conversationId}/leave")]
+        public async Task<IActionResult> LeaveGroup(Guid conversationId)
+        {
+            var userId = GetUserIdFromToken();
+            if(string.IsNullOrEmpty(userId.ToString())) return Unauthorized();
+
+            var command = new LeaveGroupCommand(conversationId, userId);
+
+            var result = await _mediator.Send(command);
+
+            return Ok(result);
+        }
+
+        //
+        [HttpGet("{conversationId}/members")]
+        public async Task<IActionResult> GetGroupMembers(Guid conversationId)
+        {
+            var userId = GetUserIdFromToken();
+
+            if(string.IsNullOrEmpty(userId.ToString())) return Unauthorized();
+
+            var query = new GetGroupMembersQuery(conversationId, userId);
+            var result = await _mediator.Send(query);
+
+            return Ok(result);
+        }
+        #endregion Group Chat Endpoints
+
+        // post: /api/chat/{conversationId}/read
+        // danh dau da doc all tin nhan trong conversation (tru tin nhan cua minh)
+        // goi khi user Open Conversation 
+        [HttpPost("{conversationId}/read")]
+        public async Task<IActionResult> MarkAsRead(Guid conversationId)
+        {
+            var userId = GetUserIdFromToken();
+            if (string.IsNullOrEmpty(userId.ToString())) return Unauthorized();
+
+            var command = new MarkMessagesAsReadCommand(conversationId, userId);
+            var count = await _mediator.Send(command);
+
+            // == Gui SignalR cho cac participant khac biet "user nay da doc" ===
+            //
+            if(count > 0)
+            {
+                // lay list participant khac (tru minh - userId) 
+                var paticipants = await _mediator.Send(new GetConversationParticipantsQuery(conversationId));
+
+                foreach(var participantId in paticipants)
+                {
+                    // chi gui cho nguoi khac (ko gui cho minh - nguoi da doc)
+                    // server gui event MessagesRead + conversationId + userId
+                    // -> de FE biet userId da doc
+                    // -> update UI (dau xanh) cho conversation do
+                    if (participantId != userId)
+                    {
+                        await _chatHubContext.Clients
+                            .Group($"user_{participantId}")
+                            .SendAsync("MessagesRead", conversationId.ToString(), userId.ToString());
+                    }
+                }
+            }
+
+            return Ok(count);
+        }
+
+
+        // ham phu de lay userId tu token (claim "sub" hoac ClaimTypes.NameIdentifier)
+        // userId tu token (claim "sub")
+        // Luu y: Mac dinh .NET co the map "sub" -> ClaimTypes.NameIdentifier
+        public Guid GetUserIdFromToken()
+        {
+            var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = Guid.Parse(userIdString);
+            return userId;
+        }
+
+        
+    }
+}
