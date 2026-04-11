@@ -42,7 +42,7 @@
         @for(msg of messages(); track $index){
         <!-- tin nhan cua minh (ben phai) -->
         @if(msg.isMine){
-        <div class="flex flex-col items-end gap-1 ml-auto max-w-[75%] group">
+        <div class="flex flex-col items-end gap-1 ml-auto max-w-[65%] group">
             <div class="bg-blue-600 text-white px-4 py-3 rounded-2xl rounded-br-none shadow-md shadow-blue-500/20">
                 <p class="leading-relaxed">{{ msg.content }}</p>
             </div>
@@ -68,7 +68,7 @@
         </div>
         }
         @else {
-        <div class="flex gap-3 max-w-[75%]">
+        <div class="flex gap-3 max-w-[65%]">
             <img [src]="'https://ui-avatars.com/api/?name=' + msg.senderName + '&background=random'"
                 class="w-8 h-8 rounded-full mt-auto mb-1">
             <div class="group">
@@ -90,11 +90,32 @@
 
         <!-- Tin nhan di - ben phai, mau xanh -->
 
+
     </div>
 
+    <!-- typing indicator -->
+    <!--  -->
+    @if(typingUser()){
+    <div class="flex items-center gap-2 px-10 py-2">
+        <div class="flex gap-1">
+            <!-- 
+                    animate-bounce: nhay len xuong (tailwind)
+                    animation-delay: delay 0.1s, 0.2s - hieu ung 3 cham nhay lan luot
+                    inline style vi tailwind ko co san class delay
+                -->
+            <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
+            <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+            <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+        </div>
+        <span class="text-xs text-gray-400 italic">
+            {{ typingUser()}} is typing...
+        </span>
+    </div>
+    }
     <!-- Footer: o nhap tin nhan -->
     <!-- messageSent: khi user gui tin -> nhan content -> goi onMessage(content) -->
-    <app-chat-input (messageSent)="onSendMessage($any($event))"></app-chat-input>
+    <app-chat-input [conversationId]="conversationId() ?? ''" [participantIds]="participantIds()"
+        (messageSent)="onSendMessage($any($event))"></app-chat-input>
 </div>
 
 @if(showAddMemberDialog()){

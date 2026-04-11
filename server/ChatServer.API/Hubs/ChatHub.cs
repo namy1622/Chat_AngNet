@@ -25,6 +25,34 @@ namespace ChatServer.API.Hubs
             await base.OnConnectedAsync();
         }
 
+        // goi khi Client Invoke("SendTyping", conversationId, participantIds)
+        public async Task SendTyping(string conversationId, string[] participantIds)
+        {
+            // lay info user dang typing(dang go tin)
+            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            //var userName = Context.User?.Identity?.Name ?? "Unknown";
+            var userName = Context.User?.FindFirst("UserName")?.Value ?? "Someone";
+
+            if (string.IsNullOrEmpty(userId)) return;
+
+            //
+            foreach(var participantId in participantIds)
+            {
+                // ko gui cho chinh minh
+                if (participantId == userId) continue;
+
+                // gui event "UserTyping" cho tung participant 
+                await Clients
+                    .Group($"user_{participantId}")
+                    .SendAsync("UserTyping", new
+                    {
+                        conversationId = conversationId,
+                        userId = userId,
+                        userName = userName
+                    });
+            }
+        }
+
         // ham gui tin (chi dung de test - thuc te dung API Controller)
         // ham nay duoc goi khi Client gui tin nhan len server (qua invoke "SendMessage") 
         // tat ca client lắng nghe event "ReceiveMessage" deu nhan duoc tin nhan nay
@@ -37,3 +65,34 @@ namespace ChatServer.API.Hubs
         }
     }
 }
+
+
+/*
+    ==== Ly Thuyet ====
+------------------------------------
+- Client goi hubConnection.invoke("SendTyping...")
+    -> SignalR tim method co name Trùng với tham so dau cua invoke 
+    -> o day la SendTyping -> goi ham nay
+
+- Khac voi Client.SendAsync (SERVER -> CLIENT)
+    invoke la CLIENT -> SERVER - server xu ly -> broadcast cho nguoi khac
+
+- participantIds la list userId trong conversation
+    client gui kem de server biet can broadcast cho ai - tranh query DB trong Hub - gui hub don gian 
+*/
+
+
+/*
+-----------------------------------------
+============ Ly Thuyet ChatHub ==========
+-----------------------------------------
+
+1. Hub la trung tam giao tiep giua Client va Server qua Websocket (SignalR)
+    - Client goi Invoke("MethodName", params)  -> Hub tim method same name -> chay method do
+    - Server goi Clients.SendAsync("EventName", data) -> client lang nghe event "EventName" -> nhan duoc data
+
+Groups.AddToGroupAsync: 
+   - Them connectionId vao group (khi connect)
+   - Cho phep gui tin nhan theo nhom thay vi tung nguoi
+   - Pattern user-level group: "user_{userId}" → moi user co 1 nhom rieng
+ */

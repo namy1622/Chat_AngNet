@@ -9,7 +9,7 @@
         <!-- #chatInput: dat ten de truy cap tu .ts -->
         <!-- keydown.enter: nhan enter -> gui tin nhan -->
         <textarea #chatInput rows="1" placeholder="Type your message..."
-            (keydown.enter)="onSend(); $event.preventDefault()" (input)="adjustHeight()"
+            (keydown.enter)="onSend(); $event.preventDefault()" (input)="adjustHeight(); onTyping()"
             class="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none text-gray-800 placeholder:text-gray-400 resize-none py-2 max-h-32"></textarea>
 
         <!-- button gui -->
@@ -18,3 +18,9 @@
         </app-ui-button>
     </div>
 </div>
+
+<!-- 
+    (input): moi khi user go phim -> goi 2 ham:
+        - adjustHeight(): auto resize textarea
+        - onTyping(): gui typing event qua SignalR (co debounce)
+-->

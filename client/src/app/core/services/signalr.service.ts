@@ -108,4 +108,30 @@ export class SignalrService {
     });
   }
 
+  // ==== Typing indicator ===
+  //
+  sendTyping(conversationId: string, participantIds: string[]) {
+    this.hubConnection?.invoke('SendTyping', conversationId, participantIds)
+      .catch(err => console.error('-- SendTyping error:', err));
+  }
+
+  // Listener event "UserTyping" tu server (server -> client)
+  addTypingListener(callback: (data: { conversationId: string; userId: string; userName: string }) => void) {
+    this.hubConnection?.on('UserTyping', (data) => {
+      callback(data);
+    })
+  }
+
 }
+
+/**
+ * ===== Gui event len server (Client -> Server) =====
+ * --- invoke vs on
+ *  
+ * - invoke("MethodName", args): Client gui len Server
+ *  -> Server tim method co ten "MethodName" trong Hub -> chay
+ *  -> Tuong tu goi API nhung qua WebSocket (real-time - nhanh hon HTTP)
+ * 
+ * - on("EventName", callback): Client lang nghe Server  (server -> client)
+ *  -> Server gui event "EventName" -> callback duoc goi (nhan data)
+ */

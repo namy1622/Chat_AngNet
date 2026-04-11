@@ -72,6 +72,16 @@ export class ChatWindowComponent {
   // signal luu danh sach thanh vien
   groupMembers = signal<GroupMemberDto[]>([]);
 
+  // signal luu name user dang go
+  typingUser = signal<string | null>(null);
+
+  // timer tu dong tat typing sau X.s
+  private typingTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  // signal luu danh sahc participantIds cua conversation hien tai
+  // truyen vao chat-input de gui typing event
+  participantIds = signal<string[]>([]);
+
   constructor() {
     // theo doi su thay doi cua tham so 'id' tren URL
     // this.route.paramMap.subscribe(params => {
@@ -136,6 +146,25 @@ export class ChatWindowComponent {
         );
       }
     });
+
+    // --- Typing indicator ---
+    //
+    this.signalrService.addTypingListener((data) => {
+      //
+      if (data.conversationId === this.conversationId()) {
+        //
+        this.typingUser.set(data.userName);
+
+        // -- auto hide sau 3s --
+        //
+        if (this.typingTimeout) {
+          clearTimeout(this.typingTimeout);
+        }
+        this.typingTimeout = setTimeout(() => {
+          this.typingUser.set(null) // 
+        }, 500);
+      }
+    })
   }
 
   // ham load lay tin nhan
@@ -157,6 +186,10 @@ export class ChatWindowComponent {
     // lay value tu input
     // const textarea = this.chatInput()?.nativeElement;
 
+    if (this.typingTimeout) {
+      clearTimeout(this.typingTimeout);
+    }
+    this.typingUser.set(null);
     // const content = textarea.value?.trim();
     if (!content) return; // neu chua nhap gi -> return
 
@@ -174,6 +207,7 @@ export class ChatWindowComponent {
         // ko can tu them tin nhan vao list o day,
         // vi SignalR se ban s.k "ReceiveMessage" khi co tin nhan moi 
         // -> listener tu update UI
+
       },
       error: (err) => {
         console.error(' -- Error sending message:', err)
@@ -195,6 +229,15 @@ export class ChatWindowComponent {
     this.chatService.getConversationById(conversationId).subscribe({
       next: (conversation) => {
         this.currentConversation.set(conversation);
+
+        // load list participantIds
+        // truyen vao chat-input -> gui typing event
+        this.chatService.getGroupMembers(conversationId).subscribe({
+          next: (members) => {
+            this.participantIds.set(members.map(m => m.userId));
+          },
+          error: (err) => console.error('-- Error loading members:', err)
+        })
       },
       error: (err) => console.error(' -- Error loading conversation:', err)
     });
