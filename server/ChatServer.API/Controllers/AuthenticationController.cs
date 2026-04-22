@@ -1,5 +1,5 @@
-﻿using ChatServer.Application.Authentication.Commands.Register;
-using ChatServer.Application.Authentication.Queries.Login;
+﻿using ChatServer.Application.Features.Authentication.Commands.Register;
+using ChatServer.Application.Features.Authentication.Queries.Login;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

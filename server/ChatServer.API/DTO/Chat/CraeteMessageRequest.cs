@@ -5,5 +5,9 @@
     {
         public Guid ConversationId { set; get; }
         public string? Content { set; get; }
+
+        // -- reply message --
+        // id tin nhan dang reply
+        public Guid? ReplyToId { set; get; }
     }
 }

@@ -1,12 +1,17 @@
 ﻿using ChatServer.API.DTO.Friendship;
 using ChatServer.API.Hubs;
-using ChatServer.Application.Chat.Commands.Friendship.RemoveFriend;
-using ChatServer.Application.Chat.Commands.Friendship.RespondFriendRequest;
-using ChatServer.Application.Chat.Commands.Friendship.SendFriendRequest;
-using ChatServer.Application.Chat.Queries.Friendship.GerFriendshipById;
-using ChatServer.Application.Chat.Queries.Friendship.GetFriendshipStatus;
-using ChatServer.Application.Chat.Queries.Friendship.GetFriendsListQuery;
-using ChatServer.Application.Chat.Queries.Friendship.GetPendingRequests;
+using ChatServer.Application.Features.Friendship.Commands.RemoveFriend;
+using ChatServer.Application.Features.Friendship.Commands.RespondFriendRequest;
+using ChatServer.Application.Features.Friendship.Commands.SendFriendRequest;
+using ChatServer.Application.Features.Friendship.Queries.GerFriendshipById;
+using ChatServer.Application.Features.Friendship.Queries.GetFriendshipStatus;
+using ChatServer.Application.Features.Friendship.Queries.GetFriendsListQuery;
+using ChatServer.Application.Features.Friendship.Queries.GetPendingRequests;
+
+
+
+
+
 
 
 //using ChatServer.Application.Chat.Queries.GetFriendshipStatus;

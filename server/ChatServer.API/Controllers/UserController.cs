@@ -1,4 +1,4 @@
-﻿using ChatServer.Application.Users.Queries;
+﻿using ChatServer.Application.Features.Users.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
