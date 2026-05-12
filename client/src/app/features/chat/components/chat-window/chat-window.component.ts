@@ -18,6 +18,7 @@ import { AddMemberDialogComponent } from '../add-member-dialog/add-member-dialog
 import { ChatHeaderComponent } from "../chat-header/chat-header.component";
 import { GroupMembersPanelComponent } from "../group-members-panel/group-members-panel.component";
 import { ChatInputComponent } from "../chat-input/chat-input.component";
+import { REACTION_EMOJIS } from '../../models/reaction.dto';
 
 @Component({
   selector: 'app-chat-window',
@@ -82,6 +83,16 @@ export class ChatWindowComponent {
   // truyen vao chat-input de gui typing event
   participantIds = signal<string[]>([]);
 
+  // -- reply message --
+  // luu message dang reply (preview phia tren input/textarea)
+  replyingTo = signal<MessageDto | null>(null);
+
+  // -- reactions --
+  reactionEmojis = REACTION_EMOJIS;
+
+  // hien emoji duoc picker
+  aciveEmojiPicker = signal<string | null>(null);
+
   constructor() {
     // theo doi su thay doi cua tham so 'id' tren URL
     // this.route.paramMap.subscribe(params => {
@@ -116,24 +127,30 @@ export class ChatWindowComponent {
     });
     //---
     // 1. dki listener tin nhan tu server
-    this.signalrService.addReceiveMessageListener((senderId, user, message, conversationId) => {
-      // khi co tin nhan moi -> them vao d.s
-      const newMessage: MessageDto = {
-        id: crypto.randomUUID(), // tam thoi tao Id gia cho tin nhan moi nhat
-        senderId: senderId,
-        senderName: user,
-        content: message,
-        createAt: new Date().toLocaleDateString([], { hour: '2-digit', minute: '2-digit' }),
-        // kiem tra xem id nguoi gui co trung voi id cua minh ko?
-        isMine: senderId.toLowerCase() === this.currentUser()?.id.toLowerCase(),
-        isRead: false
-      };
+    this.signalrService.addReceiveMessageListener(
+      (senderId, user, message, conversationId, replyToId, replyToContent) => {
+        // khi co tin nhan moi -> them vao d.s
+        const newMessage: MessageDto = {
+          id: crypto.randomUUID(), // tam thoi tao Id gia cho tin nhan moi nhat
+          senderId: senderId,
+          senderName: user,
+          content: message,
+          createAt: new Date().toLocaleDateString([], { hour: '2-digit', minute: '2-digit' }),
+          // kiem tra xem id nguoi gui co trung voi id cua minh ko?
+          isMine: senderId.toLowerCase() === this.currentUser()?.id.toLowerCase(),
+          isRead: false,
 
-      this.messages.update(oldMessages => [...oldMessages, newMessage]);
+          // -- info reply --
+          replyToId: replyToId || undefined,
+          replyToContent: replyToContent || undefined,
 
-      // scroll xuong duoi cung khi co tin nhan moi
-      setTimeout(() => this.scrollToBottom(), 50);
-    });
+        };
+
+        this.messages.update(oldMessages => [...oldMessages, newMessage]);
+
+        // scroll xuong duoi cung khi co tin nhan moi
+        setTimeout(() => this.scrollToBottom(), 50);
+      });
 
     // -- dki listener khi nguoi khac doc tin nhan cua minh
     // -> update isRead = true cho messages trong conversation do
@@ -165,6 +182,59 @@ export class ChatWindowComponent {
         }, 500);
       }
     })
+
+    // ===  REACTION LISTENER ===
+    // Khi co reaction moi tu SignalR → update messages signal
+    this.signalrService.addReactionListener((data) => {
+      this.messages.update(msgs =>
+        msgs.map(m => {
+          // chi update tin nhan co reaction moi
+          if (m.id !== data.messageId) return m;
+
+          // copy reactions hien tai (hoac tao moi)
+          let reactions = [...(m.reactions || [])];
+
+          if (data.action === 'added') {
+            // tim nhom reaction cung type
+            const idx = reactions.findIndex(r => r.type === data.reactionType);
+            if (idx >= 0) {
+              // da co nhom → tang count
+              reactions[idx] = {
+                ...reactions[idx],
+                count: reactions[idx].count + 1,
+                userReacted: reactions[idx].userReacted ||
+                  data.userId.toLowerCase() === this.currentUser()?.id.toLowerCase()
+              };
+            } else {
+              // chua co → tao nhom moi
+              reactions.push({
+                type: data.reactionType,
+                emoji: REACTION_EMOJIS[data.reactionType] || '👍',
+                count: 1,
+                userReacted: data.userId.toLowerCase() === this.currentUser()?.id.toLowerCase()
+              });
+            }
+          } else {
+            // removed → giam count hoac xoa nhom
+            const idx = reactions.findIndex(r => r.type === data.reactionType);
+            if (idx >= 0) {
+              if (reactions[idx].count <= 1) {
+                reactions.splice(idx, 1);
+              } else {
+                reactions[idx] = {
+                  ...reactions[idx],
+                  count: reactions[idx].count - 1,
+                  userReacted: data.userId.toLowerCase() === this.currentUser()?.id.toLowerCase()
+                    ? false : reactions[idx].userReacted
+                };
+              }
+            }
+          }
+
+          return { ...m, reactions };
+        })
+      );
+    });
   }
 
   // ham load lay tin nhan
@@ -199,14 +269,20 @@ export class ChatWindowComponent {
       return;
     }
 
+    // lay replyToId (neu dang reply)
+    const replyId = this.replyingTo()?.id;
+
     console.log(' -- Sending message:', convId, content);
     // subscribe de thuc hien request gui tin nhan
-    this.chatService.sendMessage(convId, content).subscribe({
+    this.chatService.sendMessage(convId, content, replyId).subscribe({
       next: (res) => {
         console.log(' -- Message sent:', res.messageId)
         // ko can tu them tin nhan vao list o day,
         // vi SignalR se ban s.k "ReceiveMessage" khi co tin nhan moi 
         // -> listener tu update UI
+
+        // clear reply sau khi gui
+        this.replyingTo.set(null);
 
       },
       error: (err) => {
@@ -287,6 +363,61 @@ export class ChatWindowComponent {
     });
   }
   //======
+  // -- reply message --
+  onReplyMessage(msg: MessageDto) {
+    this.replyingTo.set(msg);
+  }
+
+  onCancelReply() {
+    this.replyingTo.set(null);
+  }
+
+  //======
+  //-- reaction emoji --
+
+  // TOGGLE: dung cho CLICK (mobile)
+  // Bam 1 lan = mo, bam lan 2 = dong
+  toggleEmojiPicker(messageId: string) {
+    if (this.aciveEmojiPicker() == messageId) {
+      this.aciveEmojiPicker.set(null);
+    }
+    else {
+      this.aciveEmojiPicker.set(messageId);
+    }
+  }
+
+  // OPEN: dung cho MOUSEENTER (desktop)
+  // Chi MO, khong dong — tranh flicker khi hover vao/ra
+  openEmojiPicker(messageId: string) {
+    this.aciveEmojiPicker.set(messageId);
+  }
+
+  // CLOSE: dung cho MOUSELEAVE (desktop)
+  // Chi DONG khi chuot roi khoi TOAN BO container (nut + picker)
+  closeEmojiPicker() {
+    this.aciveEmojiPicker.set(null);
+  }
+
+  // -- khi user chon emoji
+  onReact(messageId: string, reactionType: number) {
+    //
+    this.aciveEmojiPicker.set(null);
+
+    this.chatService.toggleReaction(messageId, reactionType).subscribe({
+      next: (res) => {
+        console.log(' -- Reaction toggled:', res.result);
+
+        // SignalR se broadcast event → listener tu update UI
+        // khong can update thu cong o day
+      },
+      error: (err) => console.error(' -- Error toggling reaction:', err)
+    });
+  }
+
+  // -- lay ds reaction type keys (1, 2, 3,...)
+  getReactionTypes(): number[] {
+    return Object.keys(REACTION_EMOJIS).map(Number);
+  }
 
   //======
   //

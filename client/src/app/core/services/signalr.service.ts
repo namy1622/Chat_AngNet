@@ -57,7 +57,15 @@ export class SignalrService {
   // 2. lang nghe event tu server (ex: co tin nhan moi)
   // Dki lang nghe su kien "ReceiveMessage" tu server
   // Update: Nhan them senderId
-  public addReceiveMessageListener(callback: (senderId: string, user: string, message: string, conversationId: string) => void) {
+  public addReceiveMessageListener(
+    callback: (
+      senderId: string,
+      user: string,
+      message: string,
+      conversationId: string,
+      replyToId: string, // id tin nhan goc
+      replyToContent: string // content tin nhan goc
+    ) => void) {
     this.hubConnection?.on('ReceiveMessage', callback);
   }
 
@@ -120,6 +128,19 @@ export class SignalrService {
     this.hubConnection?.on('UserTyping', (data) => {
       callback(data);
     })
+  }
+
+  // === message reactions === 
+  addReactionListener(callback: (data: {
+    messageId: string;
+    userId: string;
+    userName: string;
+    reactionType: number;
+    action: string; // "added" / "removed"
+  }) => void) {
+    this.hubConnection?.on('MessageReaction', (data) => {
+      callback(data);
+    });
   }
 
 }

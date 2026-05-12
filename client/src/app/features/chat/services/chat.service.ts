@@ -14,10 +14,11 @@ export class ChatService {
 
   constructor() { }
 
-  sendMessage(conversationId: string, content: string) {
+  sendMessage(conversationId: string, content: string, replyToId?: string) {
     return this.http.post<any>(`${this.baseUrl}/send`, {
       conversationId: conversationId,
-      content: content
+      content: content,
+      replyToId: replyToId || null // gui null neu ko co
     });
   }
 
@@ -74,6 +75,16 @@ export class ChatService {
   // goi khi user Open Conversation
   markAsRead(conversationId: string): Observable<number> {
     return this.http.post<number>(`${this.baseUrl}/${conversationId}/read`, {});
+  }
+
+
+  //=== Message Reactions ===
+  // toggle reaction tren message 
+  toggleReaction(messageId: string, reactionType: number) {
+    return this.http.post<{ result: string }>(
+      `${this.baseUrl}/messages/${messageId}/react`,
+      { reactionType }
+    );
   }
 
 }

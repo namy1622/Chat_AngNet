@@ -20,6 +20,7 @@ dotnet add ChatServer.Infrastructure package Npgsql.EntityFrameworkCore.PostgreS
 ## 2. Cấu Hình Connection String
 Mở file `server/ChatServer.API/appsettings.json` và thêm đoạn cấu hình sau vào trong `"ConnectionStrings"`.
 
+
 ```json
 {
   "Logging": {

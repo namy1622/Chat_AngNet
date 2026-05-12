@@ -6,9 +6,12 @@ using ChatServer.Application.Features.Chat.Commands.CreateGroupConversation;
 using ChatServer.Application.Features.Chat.Commands.CreateMessage;
 using ChatServer.Application.Features.Chat.Commands.LeaveGroup;
 using ChatServer.Application.Features.Chat.Commands.MarkMessagesAsRead;
+using ChatServer.Application.Features.Chat.Commands.ToggleReaction;
+using ChatServer.Application.Features.Chat.Queries.ConversationByMessageId;
 using ChatServer.Application.Features.Chat.Queries.GetConversationById;
 using ChatServer.Application.Features.Chat.Queries.GetConversations;
 using ChatServer.Application.Features.Chat.Queries.GetGroupMembers;
+using ChatServer.Application.Features.Chat.Queries.GetMessageById;
 using ChatServer.Application.Features.Chat.Queries.GetMessages;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -85,7 +88,11 @@ namespace ChatServer.API.Controllers
                 var senderName = User.FindFirst("UserName")?.Value ?? "Anonymous";
 
                 // 3. tao Command gui cho Application layer
-                var command = new CreateMessageCommand(request.ConversationId, request.Content, senderId);
+                var command = new CreateMessageCommand(
+                    request.ConversationId, 
+                    request.Content ?? "", 
+                    senderId,
+                    request.ReplyToId);
 
                 // goi mediator -> cho handler chay -> tra ve messageId
                 var messageId = await _mediator.Send(command);
@@ -117,7 +124,13 @@ namespace ChatServer.API.Controllers
                 {
                     await _chatHubContext.Clients
                         .Group($"user_{paticipantId}")
-                        .SendAsync("ReceiveMessage", senderId.ToString(), senderName, request.Content, request.ConversationId.ToString());
+                        .SendAsync("ReceiveMessage", 
+                        senderId.ToString(), 
+                        senderName, 
+                        request.Content, 
+                        request.ConversationId.ToString(),
+                        request.ReplyToId.ToString() ?? "",
+                        request.ReplyToId != null ? await GetReplyContent(request.ReplyToId.Value) : "");
                 }
                 // them conversationId vao payload de Frontend biet tin nhan thuoc conversation nao
 
@@ -316,16 +329,66 @@ namespace ChatServer.API.Controllers
             return Ok(count);
         }
 
+        //-- message reactions --
+        [HttpPost("messages/{messageId}/react")]
+        public async Task<IActionResult> ToggleReaction(
+            Guid messageId,
+            [FromBody] ReactMessageRequest request)
+        {
+            var userId = GetUserIdFromToken();
+            var userName = GetUserName();
+
+            var command = new ToggleReactionCommand(messageId, userId, request.ReactionType);
+
+            var result = await _mediator.Send(command);
+
+            // lay conversationId cua message
+            var conversationId = await _mediator.Send(new GetConversationByMessageIdQuery(messageId));
+
+            var participants = await _mediator.Send(new GetConversationParticipantsQuery(conversationId));
+
+            foreach(var participant in participants)
+            {
+                await _chatHubContext.Clients
+                    .Group($"user_{participant}")
+                    .SendAsync("MessageReaction", new
+                    {
+                        MessageId = messageId.ToString(),
+                        userId = userId.ToString(),
+                        userName = userName,
+                        reactionType = request.ReactionType,
+                        action = result // "added" hay "removed"
+                    });
+            }
+
+            return Ok(new { result });
+            
+        }
+
+        //==== Helper Methods ====
 
         // ham phu de lay userId tu token (claim "sub" hoac ClaimTypes.NameIdentifier)
         // userId tu token (claim "sub")
         // Luu y: Mac dinh .NET co the map "sub" -> ClaimTypes.NameIdentifier
-        public Guid GetUserIdFromToken()
+        private Guid GetUserIdFromToken()
         {
             var userIdString = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
                                 ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userId = Guid.Parse(userIdString);
             return userId;
+        }
+
+        private string GetUserName()
+        {
+            var userName = User.FindFirst("UserName")?.Value ?? "Someone";
+            return userName;
+        }
+
+        private async Task<string> GetReplyContent(Guid messageId)
+        {
+            var msg = await _mediator.Send(new GetMessageByIdQuery(messageId));
+
+            return msg ?? "";
         }
 
         

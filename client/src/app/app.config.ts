@@ -1,6 +1,6 @@
 import { ApplicationConfig, provideZoneChangeDetection, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { LucideAngularModule, Edit, Search, Paperclip, Send, Phone, Info, MoreVertical, Plus, ArrowLeft, Check, CheckCheck, Menu, LogOut, Users, X, UserPlus, MessageCircle, UserMinus, User, Inbox } from 'lucide-angular';
+import { LucideAngularModule, Edit, Search, Paperclip, Send, Phone, Info, MoreVertical, Plus, ArrowLeft, Check, CheckCheck, Menu, LogOut, Users, X, UserPlus, MessageCircle, UserMinus, User, Inbox, CornerUpLeft, Smile } from 'lucide-angular';
 
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -35,7 +35,9 @@ export const appConfig: ApplicationConfig = {
         MessageCircle,
         UserMinus,
         User,
-        Inbox
+        Inbox,
+        CornerUpLeft,
+        Smile
       })
     )
   ]

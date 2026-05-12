@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80" # host:container (serve SPA at host:4200)
+    depends_on:
+      - server
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+
+      # dockerfile: ChatServer.API/Dockerfile
+      
+    ports:
+      - "5000:80" # host:container (API at host:5000)
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=${DEFAULT_CONNECTION} # example

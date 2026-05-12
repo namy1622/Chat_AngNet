@@ -1,5 +1,14 @@
-﻿namespace ChatServer.Application.Features.Chat.Queries.GetMessages.Dto
+namespace ChatServer.Application.Features.Chat.Queries.GetMessages.Dto
 {
+    // === DTO tom tat 1 nhom reaction (VD: 👍 x 3 nguoi) ===
+      public class ReactionSummaryDto
+    {
+        public int Type { set; get; }       // ReactionType enum (1=Like, 2=Heart,...)
+        public string Emoji { set; get; }   // ky tu emoji: "👍", "❤️",...
+        public int Count { set; get; }      // so luong nguoi da react loai nay
+        public bool UserReacted { set; get; } // true = MINH da react loai nay
+    }
+
     public class MessageDto
     {
         public Guid Id { set; get; }
@@ -18,5 +27,8 @@
         public Guid? ReplyToId { set; get; }
         public string? ReplyToContent { set; get; } // noi dung tin nhan goc (reply to)
         public string? ReplyToSenderName { set; get; } // name nguoi gui tin nhan goc (reply to)
+
+        //-- reactions --
+        public List<ReactionSummaryDto> Reactions { set; get; } = new();
     }
 }
