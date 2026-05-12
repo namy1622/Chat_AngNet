@@ -910,11 +910,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
+      "projectUniqueName": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
       "projectName": "ChatServer.Application",
-      "projectPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
+      "projectPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
       "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-      "outputPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\obj\\",
+      "outputPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -936,8 +936,8 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "projectReferences": {
-            "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj": {
-              "projectPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj"
+            "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj": {
+              "projectPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj"
             }
           }
         }
@@ -994,5 +994,17 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.309/PortableRuntimeIdentifierGraph.json"
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'AutoMapper' 16.0.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-rvv3-g6hj-g44x",
+      "libraryId": "AutoMapper",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    }
+  ]
 }

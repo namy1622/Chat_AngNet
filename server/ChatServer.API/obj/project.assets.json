@@ -5351,11 +5351,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.API\\ChatServer.API.csproj",
+      "projectUniqueName": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.API\\ChatServer.API.csproj",
       "projectName": "ChatServer.API",
-      "projectPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.API\\ChatServer.API.csproj",
+      "projectPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.API\\ChatServer.API.csproj",
       "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-      "outputPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.API\\obj\\",
+      "outputPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.API\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -5377,14 +5377,14 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "projectReferences": {
-            "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj": {
-              "projectPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj"
+            "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj": {
+              "projectPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj"
             },
-            "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj": {
-              "projectPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj"
+            "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj": {
+              "projectPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj"
             },
-            "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Infrastructure\\ChatServer.Infrastructure.csproj": {
-              "projectPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Infrastructure\\ChatServer.Infrastructure.csproj"
+            "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Infrastructure\\ChatServer.Infrastructure.csproj": {
+              "projectPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Infrastructure\\ChatServer.Infrastructure.csproj"
             }
           }
         }
