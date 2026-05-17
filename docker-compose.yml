@@ -1,23 +1,55 @@
-version: "3.8"
+version: "3.9"
+
 services:
-  client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: chatangnet-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "4200:80" # host:container (serve SPA at host:4200)
-    depends_on:
-      - server
+      - "5433:5432"
+    volumes:
+      - chatangnet_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   server:
     build:
       context: ./server
       dockerfile: Dockerfile
-
-      # dockerfile: ChatServer.API/Dockerfile
-      
+    container_name: chatangnet-server
+    depends_on:
+      postgres-db:
+        condition: service_healthy
     ports:
-      - "5000:80" # host:container (API at host:5000)
+      - "5000:80"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=${DEFAULT_CONNECTION} # example
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:80
+
+      # Quan trọng: code hiện đọc key PostgreConnection, KHÔNG phải DefaultConnection
+      ConnectionStrings__PostgreConnection: Host=postgres-db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+
+      # JWT nên đưa ra env theo chuẩn enterprise
+      JwtSettings__Secret: ${JWT_SECRET}
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
+      JwtSettings__ExpiryMinutes: ${JWT_EXPIRY_MINUTES}
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: chatangnet-client
+    depends_on:
+      - server
+    ports:
+      - "4200:80"
+
+volumes:
+  chatangnet_pgdata:

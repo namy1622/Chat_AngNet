@@ -33,11 +33,27 @@ namespace ChatServer.Infrastructure
             //         b => b.MigrationsAssembly(typeof(ChatDbContext).Assembly.FullName)));
 
             // CÁCH 2: Dùng PostgreSQL
-            var postgreConnectionString = configuration.GetConnectionString("PostgreConnection");
-            services.AddDbContext<ChatDbContext>(options =>
-                options.UseNpgsql(postgreConnectionString,
-                    b => b.MigrationsAssembly(typeof(ChatDbContext).Assembly.FullName)));
+            // var postgreConnectionString = configuration.GetConnectionString("PostgreConnection");
 
+            // services.AddDbContext<ChatDbContext>(options =>
+            //     options.UseNpgsql(postgreConnectionString,
+            //         b => b.MigrationsAssembly(typeof(ChatDbContext).Assembly.FullName)));
+
+            if (dbProvider == "sqlserver")
+            {
+                var connectionString = configuration.GetConnectionString("DefaultConnection");
+                services.AddDbContext<ChatDbContext>(options =>
+                    options.UseSqlServer(connectionString,
+                        b => b.MigrationsAssembly(typeof(ChatDbContext).Assembly.FullName)));
+            }
+            else
+            {
+                // mặc định PostgreSQL
+                var postgreConnectionString = configuration.GetConnectionString("PostgreConnection");
+                services.AddDbContext<ChatDbContext>(options =>
+                    options.UseNpgsql(postgreConnectionString,
+                        b => b.MigrationsAssembly(typeof(ChatDbContext).Assembly.FullName)));
+            }
             //----------------------------------------------
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
