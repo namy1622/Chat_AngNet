@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj": {}
+    "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj": {}
   },
   "projects": {
-    "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj": {
+    "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj",
+        "projectUniqueName": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj",
         "projectName": "ChatServer.Domain",
-        "projectPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj",
+        "projectPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj",
         "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-        "outputPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\obj\\",
+        "outputPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

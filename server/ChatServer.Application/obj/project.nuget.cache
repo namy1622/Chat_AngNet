@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "DUu/boSwJGg=",
+  "dgSpecHash": "LWflS+KVjjc=",
   "success": true,
-  "projectFilePath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
+  "projectFilePath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ADMIN\\.nuget\\packages\\automapper\\16.0.0\\automapper.16.0.0.nupkg.sha512",
     "C:\\Users\\ADMIN\\.nuget\\packages\\fluentvalidation\\12.1.1\\fluentvalidation.12.1.1.nupkg.sha512",
@@ -30,9 +30,9 @@
       "code": "NU1903",
       "level": "Warning",
       "message": "Package 'AutoMapper' 16.0.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-rvv3-g6hj-g44x",
-      "projectPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
+      "projectPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
       "warningLevel": 1,
-      "filePath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
+      "filePath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
       "libraryId": "AutoMapper",
       "targetGraphs": [
         "net9.0"

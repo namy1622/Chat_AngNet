@@ -910,11 +910,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
+      "projectUniqueName": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
       "projectName": "ChatServer.Application",
-      "projectPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
+      "projectPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\ChatServer.Application.csproj",
       "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-      "outputPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\obj\\",
+      "outputPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Application\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -936,8 +936,8 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "projectReferences": {
-            "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj": {
-              "projectPath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj"
+            "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj": {
+              "projectPath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Domain\\ChatServer.Domain.csproj"
             }
           }
         }

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "aThSWXMqvAA=",
+  "dgSpecHash": "iUg4ZNvw8x8=",
   "success": true,
-  "projectFilePath": "f:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Infrastructure\\ChatServer.Infrastructure.csproj",
+  "projectFilePath": "F:\\ProjectAngular\\Chat_AngNet\\server\\ChatServer.Infrastructure\\ChatServer.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ADMIN\\.nuget\\packages\\automapper\\16.0.0\\automapper.16.0.0.nupkg.sha512",
     "C:\\Users\\ADMIN\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
