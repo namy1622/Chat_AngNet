@@ -79,7 +79,7 @@ jobs:
       with:
         context: ./server  # Thư mục chứa Dockerfile cua server
         push: true
-        tags: ghcr.io/${{ github.repository }}-server:latest  
+        tags: ghcr.io/namy1622/chat_angnet-server:latest  
         # Tên image: ghcr.io/username/repo-name-server:latest
     
     - name: Build and push Docker Frontend image
@@ -87,5 +87,5 @@ jobs:
       with:
         context: ./client  # Thư mục chứa Dockerfile cua server
         push: true
-        tags: ghcr.io/${{ github.repository }}-client:latest  
+        tags: ghcr.io/namy1622/chat_angnet-client:latest  
         # Tên image: ghcr.io/username/repo-name-client:latest
