@@ -1,6 +1,7 @@
 using ChatServer.Infrastructure;
 using ChatServer.Application;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -37,5 +38,11 @@ app.MapControllers();
 // dinh tuyen hub
 // client se ket noi vao duong dan: https://localhost:44372/api/chatHub
 app.MapHub<ChatServer.API.Hubs.ChatHub>("/api/chatHub");
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ChatServer.Infrastructure.Persitence.ChatDbContext>();
+    db.Database.Migrate(); // Tự động tạo bảng nếu chưa có
+}
 
 app.Run();

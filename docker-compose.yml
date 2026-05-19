@@ -17,9 +17,10 @@ services:
       retries: 20
 
   server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
+    image: ghcr.io/namy1622/chat_angnet-server:latest
+    # build:
+    #   context: ./server
+    #   dockerfile: Dockerfile
     container_name: chatangnet-server
     depends_on:
       postgres-db:
@@ -40,9 +41,10 @@ services:
       JwtSettings__ExpiryMinutes: ${JWT_EXPIRY_MINUTES}
 
   client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
+    image: ghcr.io/namy1622/chat_angnet-client:latest
+    # build:
+    #   context: ./client
+    #   dockerfile: Dockerfile
     container_name: chatangnet-client
     depends_on:
       - server
