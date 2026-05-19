@@ -6,6 +6,7 @@ using ChatServer.Infrastructure.Persitence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 //using Microsoft.AspNetCore.Authentication.JwtBearer;
 namespace ChatServer.Infrastructure
 {
@@ -17,13 +18,14 @@ namespace ChatServer.Infrastructure
             // cau hinh JwtSetting lay tu appsettings.json
             services.Configure<JwtSetting>(configuration.GetSection(JwtSetting.SectionName));
 
+            services.AddSingleton(sp => sp.GetRequiredService<IOptions<JwtSetting>>().Value);
             // d.ki cac dich vu authentication
             services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
             services.AddSingleton<IPasswordHasher, PasswordHasher>();
             //----------------------------------------------
             // Cấu hình DbContext với Entity Framework Core
             // đọc config "DatabaseProvider" từ appsettings
-            var dbProvider = configuration.GetValue<string>("DatabaseProvider");
+            var dbProvider = configuration.GetValue<string>("DatabaseProvider")?.Trim().ToLowerInvariant();
 
             // CÁCH 1: Dùng SQL Server (Mặc định)
             // Đọc chuỗi kết nối từ appsettings.json

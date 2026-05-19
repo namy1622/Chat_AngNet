@@ -8,7 +8,7 @@
 
     <!-- panel: thanh vien nhom(slide-in tu ben phai) -->
     @if(showMembersPanel()){
-    <app-group-members-panel [members]="groupMembers()" (close)="showMembersPanel.set(false)"
+    <app-group-members-panel [members]="store.groupMembers()" (close)="showMembersPanel.set(false)"
         (addMemberClick)="onOpenAddMemberDialog()"></app-group-members-panel>
     }
 
@@ -39,7 +39,7 @@
         }
 
         <!--  Lap qua d.s tin nhan -->
-        @for(msg of messages(); track $index){
+        @for(msg of store.messages(); track $index){
 
         <!-- ======================================== -->
         <!-- TIN NHAN CUA MINH (ben phai - mau xanh) -->

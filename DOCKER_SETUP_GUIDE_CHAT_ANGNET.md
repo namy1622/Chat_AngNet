@@ -755,7 +755,48 @@ $env:ConnectionStrings__PostgreConnection="Host=localhost;Port=5433;Database=cha
 # → Hoặc xem logs: docker compose logs postgres-db
 ```
 
-## 14. Kết luận
+## 14. Các bước chạy Dev / Production
+
+### 14.1 Dev: chạy nhanh để code và debug
+
+Nếu muốn phát triển hằng ngày, ưu tiên chạy local để có hot-reload:
+
+```powershell
+# Client
+cd .\client
+ng serve
+
+# Server
+cd .\server\ChatServer.API
+dotnet run
+```
+
+Khi chạy theo cách này:
+
+- `client` sẽ dùng Angular dev server.
+- `server` sẽ đọc `appsettings.Development.json`.
+- Database nên là **PostgreSQL local** nếu bạn muốn giữ data cũ trên máy.
+- Nếu muốn dùng PostgreSQL Docker thì đổi connection string sang `Host=localhost;Port=5433`.
+
+### 14.2 Production: chạy đúng kiểu deploy thật
+
+Khi build để deploy, nên chạy toàn bộ bằng Docker:
+
+```powershell
+docker compose up -d --build
+```
+
+Luồng production thực tế:
+
+1. Build image cho `client` và `server`.
+2. Start `postgres-db` hoặc dùng database managed riêng.
+3. Inject secret qua `.env` hoặc secret manager.
+4. Apply migration vào DB đích trước khi mở traffic.
+5. Dùng Nginx hoặc load balancer để public app.
+
+Trong production, không nên dùng dữ liệu local trên máy cá nhân và không nên hardcode secret trong `appsettings.json`.
+
+## 15. Kết luận
 
 Nếu làm đúng theo guide này, bạn có thể áp dụng cho các dự án sau mà không phải mò lại từ đầu:
 

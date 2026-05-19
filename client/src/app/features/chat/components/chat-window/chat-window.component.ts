@@ -23,7 +23,7 @@ import { ChatStore } from '../../stores/chat.store';
 
 @Component({
   selector: 'app-chat-window',
-  imports: [UiButtonComponent, UiIconComponent, CommonModule, AddMemberDialogComponent, ChatHeaderComponent, GroupMembersPanelComponent, ChatInputComponent],
+  imports: [UiIconComponent, CommonModule, AddMemberDialogComponent, ChatHeaderComponent, GroupMembersPanelComponent, ChatInputComponent],
   templateUrl: './chat-window.component.html',
   styleUrl: './chat-window.component.scss',
   host: {
@@ -119,7 +119,7 @@ export class ChatWindowComponent {
         this.store.setActiveConversationId(id);
         this.store.loadMessages(id);
         this.store.loadConversationInfo(id);
-        this.showMembersPanel.set(false); // an panel khi doi chat 
+        // this.showMembersPanel.set(false); // an panel khi doi chat 
       }
 
       // logic scroll khi co tin nhan moi (phu thuoc vao store.messages)
