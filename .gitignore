@@ -4,11 +4,13 @@ server/**/obj/
 server/**/*.user
 server/**/*.suo
 server/**/.vs/
+server/**/appsettings_hide.json
 
 # ===== Angular (client) =====
 client/node_modules/
 client/dist/
 client/.angular/
+
 
 */md
 

@@ -24,7 +24,7 @@ import { count } from 'rxjs';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [CommonModule, RouterLink, RouterLinkActive,
+  imports: [CommonModule ,
     UiButtonComponent, UiIconComponent, UiAvatarComponent,
     CreateGroupDialogComponent, ConversationListComponent,
     FriendsListPanelComponent,

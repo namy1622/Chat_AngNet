@@ -3,12 +3,12 @@
 <div class="flex flex-col h-full bg-white relative">
 
     <!-- HEADER -->
-    <app-chat-header [conversation]="currentConversation()" (backClicked)="goBack()"
+    <app-chat-header [conversation]="store.currentConversation()" (backClicked)="goBack()"
         (toggleMembers)="onToggleMembersPanel()" (leaveGroup)="onLeaveGroup()"></app-chat-header>
 
     <!-- panel: thanh vien nhom(slide-in tu ben phai) -->
     @if(showMembersPanel()){
-    <app-group-members-panel [members]="groupMembers()" (close)="showMembersPanel.set(false)"
+    <app-group-members-panel [members]="store.groupMembers()" (close)="showMembersPanel.set(false)"
         (addMemberClick)="onOpenAddMemberDialog()"></app-group-members-panel>
     }
 
@@ -24,7 +24,7 @@
             <div class="h-px bg-gray-100 flex-1"></div>
         </div> -->
 
-        @if(messages().length === 0){
+        @if(store.messages().length === 0){
         <div class="text-center text-gray-400 mt-10">
             <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5"
@@ -39,7 +39,7 @@
         }
 
         <!--  Lap qua d.s tin nhan -->
-        @for(msg of messages(); track $index){
+        @for(msg of store.messages(); track $index){
 
         <!-- ======================================== -->
         <!-- TIN NHAN CUA MINH (ben phai - mau xanh) -->
@@ -91,8 +91,7 @@
                         - Binh thuong: an (opacity-0), hover msg moi hien
                         - Khi picker DANG MO: ep hien (opacity-100)
                     -->
-                    <div class="absolute -bottom-2.5 -left-2.5 transition-all"
-                        [ngClass]="aciveEmojiPicker() === msg.id 
+                    <div class="absolute -bottom-2.5 -left-2.5 transition-all" [ngClass]="aciveEmojiPicker() === msg.id 
                             ? 'opacity-100' 
                             : 'opacity-0 group-hover/msg:opacity-100'">
                         <button (click)="toggleEmojiPicker(msg.id); $event.stopPropagation()"
@@ -110,7 +109,8 @@
                     @if(aciveEmojiPicker() === msg.id) {
                     <!-- Backdrop: click bat ky dau tren man hinh → dong picker -->
                     <div class="fixed inset-0 z-20" (click)="closeEmojiPicker()"></div>
-                    <div class="absolute -top-2 right-0 z-30 bg-white shadow-xl rounded-2xl border border-gray-100 px-2 py-1.5 flex gap-0.5">
+                    <div
+                        class="absolute -top-2 right-0 z-30 bg-white shadow-xl rounded-2xl border border-gray-100 px-2 py-1.5 flex gap-0.5">
                         @for(type of getReactionTypes(); track type) {
                         <button (click)="onReact(msg.id, type)"
                             class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-xl transition-all hover:scale-125 active:scale-95">
@@ -190,8 +190,7 @@
                         </div>
 
                         <!-- NUT EMOJI — goc duoi-PHAI cua bubble -->
-                        <div class="absolute -bottom-2.5 -right-2.5 transition-all"
-                            [ngClass]="aciveEmojiPicker() === msg.id 
+                        <div class="absolute -bottom-2.5 -right-2.5 transition-all" [ngClass]="aciveEmojiPicker() === msg.id 
                                 ? 'opacity-100' 
                                 : 'opacity-0 group-hover/msg:opacity-100'">
                             <button (click)="toggleEmojiPicker(msg.id); $event.stopPropagation()"
@@ -203,7 +202,8 @@
                         <!-- EMOJI PICKER POPUP (tach rieng, dinh vi theo bubble) -->
                         @if(aciveEmojiPicker() === msg.id) {
                         <div class="fixed inset-0 z-20" (click)="closeEmojiPicker()"></div>
-                        <div class="absolute -top-2 left-0 z-30 bg-white shadow-xl rounded-2xl border border-gray-100 px-2 py-1.5 flex gap-0.5">
+                        <div
+                            class="absolute -top-2 left-0 z-30 bg-white shadow-xl rounded-2xl border border-gray-100 px-2 py-1.5 flex gap-0.5">
                             @for(type of getReactionTypes(); track type) {
                             <button (click)="onReact(msg.id, type)"
                                 class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-xl transition-all hover:scale-125 active:scale-95">
@@ -251,7 +251,7 @@
 
     <!-- typing indicator -->
     <!--  -->
-    @if(typingUser()){
+    @if(store.typingUser()){
     <div class="flex items-center gap-2 px-10 py-2">
         <div class="flex gap-1">
             <!-- 
@@ -264,22 +264,22 @@
             <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
         </div>
         <span class="text-xs text-gray-400 italic">
-            {{ typingUser()}} is typing...
+            {{ store.typingUser()}} is typing...
         </span>
     </div>
     }
     <!-- Footer: o nhap tin nhan + content reply message-->
     <!-- messageSent: khi user gui tin -> nhan content -> goi onMessage(content) -->
-    @if(replyingTo()){
+    @if(store.replyingTo()){
     <div class="px-4 py-2 bg-gray-50 broder-t border-gray-200 flex items-center gap-3">
         <div class="w-1 h-10 bg-blue-500 rounded-full flex-shrink-0"></div>
 
         <div class="flex-1 min-w-0">
             <p class="text-xs font-semibold text-blue-600">
-                Replying to {{ replyingTo()?.senderName}}
+                Replying to {{ store.replyingTo()?.senderName}}
             </p>
             <p class="text-sm text-gray-500 truncate">
-                {{replyingTo()?.content}}
+                {{store.replyingTo()?.content}}
             </p>
         </div>
         <button (click)="onCancelReply()"
@@ -288,7 +288,7 @@
         </button>
     </div>
     }
-    <app-chat-input [conversationId]="conversationId() ?? ''" [participantIds]="participantIds()"
+    <app-chat-input [conversationId]="conversationId() ?? ''" [participantIds]="store.participantIds()"
         (messageSent)="onSendMessage($any($event))"></app-chat-input>
 </div>
 
