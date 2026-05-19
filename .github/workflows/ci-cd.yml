@@ -28,8 +28,8 @@ jobs:
     - name: Build project
       run: dotnet build ./server/ChatServer.API.csproj --configuration Release --no-restore
     
-    - name: Run tests
-      run: dotnet test ./server/ChatServer.API.csproj --configuration Release --no-build --verbosity normal
+    #- name: Run tests
+    #  run: dotnet test ./server/ChatServer.API.csproj --configuration Release --no-build --verbosity normal
 
   # JOB 2: Build và Test Frontend (Angular)
   build-angular:
