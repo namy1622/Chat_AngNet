@@ -7,6 +7,11 @@ on:
   pull_request:
     branches: [ "main", "master" ]
 
+# Cấp quyền cho GitHub Actions được phép ĐẨY (push) Image lên GHCR
+permissions:
+  contents: read
+  packages: write
+
 # Các jobs sẽ chạy
 jobs:
   # JOB 1: Build và Test Backend (.NET)
