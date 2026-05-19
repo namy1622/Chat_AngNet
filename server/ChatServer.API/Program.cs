@@ -2,6 +2,7 @@ using ChatServer.Infrastructure;
 using ChatServer.Application;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using ChatServer.Infrastructure.Data;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -41,7 +42,7 @@ app.MapHub<ChatServer.API.Hubs.ChatHub>("/api/chatHub");
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ChatServer.Infrastructure.Persitence.ChatDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
     db.Database.Migrate(); // Tự động tạo bảng nếu chưa có
 }
 
