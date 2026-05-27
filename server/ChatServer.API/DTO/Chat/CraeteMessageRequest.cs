@@ -9,5 +9,8 @@
         // -- reply message --
         // id tin nhan dang reply
         public Guid? ReplyToId { set; get; }
+
+        // client upload files → nhận fileIds → gửi kèm message
+        public List<long>? FileIds { get; set; }
     }
 }

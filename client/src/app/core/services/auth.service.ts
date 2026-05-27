@@ -72,7 +72,7 @@ export class AuthService {
   private handleAuthSuccess(response: AuthResponse) {
     // server tra ve {user, token}
     // 1. luu token (most important) vao localStorage de dung cho request sau
-    localStorage.setItem('token', response.token);
+    // localStorage.setItem('token', response.token);
 
     // 2. luu user vao currentUserSubject de hien thi ten, avatar,... trong Component
     localStorage.setItem('user', JSON.stringify(response.user));
@@ -88,6 +88,6 @@ export class AuthService {
 
   // kiem tra xem co dang login ko (true/false)
   isLoggedIn(): boolean {
-    return !!localStorage.getItem('token'); // meo convert string -> boolean
+    return !!localStorage.getItem('user'); // meo convert string -> boolean
   }
 }

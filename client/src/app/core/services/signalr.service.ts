@@ -4,6 +4,18 @@ import { BehaviorSubject } from 'rxjs';
 import { AuthService } from './auth.service';
 import { ConversationDto } from '../../features/chat/models/conversation.dto';
 
+// Định nghĩa payload nhận từ SignalR Backend
+export interface ReceiveMessagePayload {
+  senderId: string;
+  senderName: string;
+  content: string;
+  conversationId: string;
+  replyToId?: string;
+  replyContent?: string;
+  messageType: number;
+  attachments?: any[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -58,14 +70,7 @@ export class SignalrService {
   // Dki lang nghe su kien "ReceiveMessage" tu server
   // Update: Nhan them senderId
   public addReceiveMessageListener(
-    callback: (
-      senderId: string,
-      user: string,
-      message: string,
-      conversationId: string,
-      replyToId: string, // id tin nhan goc
-      replyToContent: string // content tin nhan goc
-    ) => void) {
+    callback: (payload: ReceiveMessagePayload) => void) {
     this.hubConnection?.on('ReceiveMessage', callback);
   }
 

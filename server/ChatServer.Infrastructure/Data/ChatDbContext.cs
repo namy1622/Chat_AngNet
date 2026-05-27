@@ -22,6 +22,9 @@ public class ChatDbContext : DbContext, IChatContext
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<CallSession> CallSessions { get; set; }
 
+    public DbSet<FileAttachment> FileAttachments { get; set; }
+    public DbSet<MessageAttachment> MessageAttachments { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -73,5 +76,37 @@ public class ChatDbContext : DbContext, IChatContext
         // 7. Config Key for MessageReadState
         modelBuilder.Entity<MessageReadState>()
             .HasKey(x => new { x.MessageId, x.UserId });
+
+        // ===== 8. Config FileAttachment =====
+        // FileAttachment → User (ai upload)
+        // Restrict: không cho xoá user nếu còn file
+        modelBuilder.Entity<FileAttachment>()
+            .HasOne(f => f.UploadedBy)
+            .WithMany()
+            .HasForeignKey(f => f.UploadedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ===== 9. Config MessageAttachment =====
+        // MessageAttachment → Message (Cascade: xoá message → xoá liên kết)
+        modelBuilder.Entity<MessageAttachment>()
+            .HasOne(ma => ma.Message)
+            .WithMany(m => m.Attachments)
+            .HasForeignKey(ma => ma.MessageId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // MessageAttachment → FileAttachment (Restrict: giữ file khi xoá liên kết)
+        modelBuilder.Entity<MessageAttachment>()
+            .HasOne(ma => ma.FileAttachment)
+            .WithMany(f => f.MessageAttachments)
+            .HasForeignKey(ma => ma.FileAttachmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<FileAttachment>()
+        .Property(f => f.Id)
+        .UseIdentityColumn();  // Báo hiệu sử dụng Identity column
+
+        modelBuilder.Entity<MessageAttachment>()
+        .Property(f => f.Id)
+        .UseIdentityColumn();  // Báo hiệu sử dụng Identity column
     }
 }

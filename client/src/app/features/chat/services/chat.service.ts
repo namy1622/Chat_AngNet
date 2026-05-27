@@ -14,11 +14,12 @@ export class ChatService {
 
   constructor() { }
 
-  sendMessage(conversationId: string, content: string, replyToId?: string) {
+  sendMessage(conversationId: string, content: string, replyToId?: string, fileIds?: string[]) {
     return this.http.post<any>(`${this.baseUrl}/send`, {
       conversationId: conversationId,
       content: content,
-      replyToId: replyToId || null // gui null neu ko co
+      replyToId: replyToId || null, // gui null neu ko co
+      fileIds: fileIds || null
     });
   }
 

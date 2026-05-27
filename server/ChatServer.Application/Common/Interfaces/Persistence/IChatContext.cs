@@ -21,6 +21,8 @@ namespace ChatServer.Application.Common.Interfaces.Persistence
          DbSet<UserDevice> UserDevices { get; set; }
          DbSet<Notification> Notifications { get; set; }
          DbSet<CallSession> CallSessions { get; set; }
+        DbSet<FileAttachment> FileAttachments { get; set; }
+        DbSet<MessageAttachment> MessageAttachments { get; set; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }
     // Infrastructure sẽ implement interface này

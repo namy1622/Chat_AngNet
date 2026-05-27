@@ -2,10 +2,36 @@
     <div
         class="flex items-center gap-2 bg-gray-50 border border-gray-200 p-2 rounded-2xl focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all">
         <!--  -->
-        <app-ui-button variant="ghost" size="sm">
+        <app-ui-button variant="ghost" size="sm" (click)="fileInput.click()">
             <app-ui-icon name="paperclip" [size]="20"></app-ui-icon>
         </app-ui-button>
 
+        <!-- Input file ẩn — trigger khi click icon Paperclip -->
+        <input type="file" #fileInput multiple (change)="onFilesSelected($event)" [accept]="acceptedTypes"
+            class="hidden" />
+
+        <!-- Preview files đã chọn (hiện trước khi gửi) -->
+        @if (selectedFiles().length > 0) {
+        <div class="flex flex-wrap gap-2 p-2 border-b border-gray-200">
+            @for (file of selectedFiles(); track file.name) {
+            <div class="relative group flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg text-sm">
+                <!-- Ảnh: hiện preview nhỏ -->
+                @if (isImageFile(file)) {
+                <img [src]="getPreviewUrl(file)" class="w-10 h-10 rounded object-cover" />
+                } @else {
+                <!-- Document: hiện icon file -->
+                <app-ui-icon name="fileText" [size]="20" class="text-gray-400"></app-ui-icon>
+                }
+                <span class="max-w-[120px] truncate">{{ file.name }}</span>
+                <span class="text-xs text-gray-400">{{ formatSize(file.size) }}</span>
+                <!-- Nút X xoá file -->
+                <button (click)="removeFile(file)" class="ml-1 text-gray-400 hover:text-red-500 transition-colors">
+                    <app-ui-icon name="x" [size]="14"></app-ui-icon>
+                </button>
+            </div>
+            }
+        </div>
+        }
         <!-- #chatInput: dat ten de truy cap tu .ts -->
         <!-- keydown.enter: nhan enter -> gui tin nhan -->
         <textarea #chatInput rows="1" placeholder="Type your message..."

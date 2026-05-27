@@ -2,334 +2,205 @@
 @if (conversationId()) {
 <div class="flex flex-col h-full bg-white relative">
 
-    <!-- HEADER -->
-    <app-chat-header [conversation]="store.currentConversation()" (backClicked)="goBack()"
-        (toggleMembers)="onToggleMembersPanel()" (leaveGroup)="onLeaveGroup()"></app-chat-header>
+  <!-- HEADER -->
+  <app-chat-header [conversation]="store.currentConversation()" (backClicked)="goBack()"
+    (toggleMembers)="onToggleMembersPanel()" (leaveGroup)="onLeaveGroup()"></app-chat-header>
 
-    <!-- panel: thanh vien nhom(slide-in tu ben phai) -->
-    @if(showMembersPanel()){
-    <app-group-members-panel [members]="store.groupMembers()" (close)="showMembersPanel.set(false)"
-        (addMemberClick)="onOpenAddMemberDialog()"></app-group-members-panel>
-    }
+  <!-- panel: thanh vien nhom(slide-in tu ben phai) -->
+  @if(showMembersPanel()){
+  <app-group-members-panel [members]="store.groupMembers()" (close)="showMembersPanel.set(false)"
+    (addMemberClick)="onOpenAddMemberDialog()"></app-group-members-panel>
+  }
 
 
-    <!-- BODY: Danh sach tin nhan -->
-    <!-- flex-1: chiem het chieu cao con lai -->
-    <!-- overflow-y-auto: cuon doc khi nhieu tin nhan -->
-    <div #scrollContainer class="flex-1 overflow-y-auto p-6 space-y-6">
-        <!-- dong phan cach ngay -->
-        <!-- <div class="flex items-center gap-4 py-2">
+  <!-- BODY: Danh sach tin nhan -->
+  <!-- flex-1: chiem het chieu cao con lai -->
+  <!-- overflow-y-auto: cuon doc khi nhieu tin nhan -->
+  <div #scrollContainer class="flex-1 overflow-y-auto p-6 space-y-6">
+    <!-- dong phan cach ngay -->
+    <!-- <div class="flex items-center gap-4 py-2">
             <div class="h-px bg-gray-100 flex-1"></div>
             <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Today</span>
             <div class="h-px bg-gray-100 flex-1"></div>
         </div> -->
 
-        @if(store.messages().length === 0){
-        <div class="text-center text-gray-400 mt-10">
-            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5"
-                    viewBox="0 0 24 24">
-                    <path
-                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                </svg>
-            </div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-1">No messages yet</h3>
-            <p class="text-sm">Start the conversation by sending a message.</p>
-        </div>
-        }
-
-        <!--  Lap qua d.s tin nhan -->
-        @for(msg of store.messages(); track $index){
-
-        <!-- ======================================== -->
-        <!-- TIN NHAN CUA MINH (ben phai - mau xanh) -->
-        <!-- ======================================== -->
-        @if(msg.isMine){
-        <div class="flex flex-col items-end gap-0.5 ml-auto max-w-[70%] group/msg">
-
-            <!-- A2: Quoted reply (hien phia TREN bubble) -->
-            @if(msg.replyToContent){
-            <div
-                class="bg-blue-100/70 text-blue-700 text-xs px-3 py-1.5 rounded-xl border-l-2 border-blue-400 w-fit max-w-full">
-                <span class="font-semibold text-blue-600 text-[11px]">{{ msg.replyToSenderName }}</span>
-                <p class="truncate opacity-80">{{ msg.replyToContent }}</p>
-            </div>
-            }
-
-            <!-- 
-                HANG CHINH: [reply button] + [bubble (voi emoji button goc duoi)]
-                - Reply button: ben TRAI bubble, chi hien khi hover
-                - Emoji button: NAM TRONG bubble, goc DUOI-TRAI
-            -->
-            <div class="flex items-end gap-1">
-
-                <!-- Nut Reply (ben trai bubble, hien khi hover) -->
-                <button (click)="onReplyMessage(msg)"
-                    class="p-1.5 mb-1 text-gray-300 hover:text-blue-500 rounded-full hover:bg-blue-50/80 transition-all opacity-0 group-hover/msg:opacity-100"
-                    title="Reply">
-                    <app-ui-icon name="corner-up-left" [size]="16"></app-ui-icon>
-                </button>
-
-                <!-- 
-                    BUBBLE + EMOJI BUTTON (relative de emoji button dinh vi absolute)
-                    Emoji button nam goc duoi-trai cua bubble
-                -->
-                <div class="relative">
-                    <!-- Bubble noi dung -->
-                    <div
-                        class="bg-blue-600 text-white px-4 py-2.5 rounded-2xl rounded-br-sm shadow-md shadow-blue-500/15">
-                        <p class="leading-relaxed text-[15px]">{{ msg.content }}</p>
-                    </div>
-
-                    <!-- 
-                        NUT EMOJI — goc duoi-trai cua bubble
-                        - CLICK de toggle picker (ca desktop va mobile)
-                        - Click outside (backdrop) de dong picker
-                        - Dinh vi: absolute + -bottom-2.5 + -left-2.5
-                        
-                        LOGIC HIEN/AN:
-                        - Binh thuong: an (opacity-0), hover msg moi hien
-                        - Khi picker DANG MO: ep hien (opacity-100)
-                    -->
-                    <div class="absolute -bottom-2.5 -left-2.5 transition-all" [ngClass]="aciveEmojiPicker() === msg.id 
-                            ? 'opacity-100' 
-                            : 'opacity-0 group-hover/msg:opacity-100'">
-                        <button (click)="toggleEmojiPicker(msg.id); $event.stopPropagation()"
-                            class="w-7 h-7 flex items-center justify-center rounded-full bg-white shadow-md border border-gray-100 text-gray-400 hover:text-yellow-500 hover:border-yellow-200 transition-all hover:scale-110">
-                            <app-ui-icon name="smile" [size]="14"></app-ui-icon>
-                        </button>
-                    </div>
-
-                    <!-- 
-                        EMOJI PICKER POPUP (tach rieng khoi nut, dinh vi theo bubble)
-                        - Dung right-0 de picker can PHAI theo bubble (ko tran ra ngoai)
-                        - bottom-0 + mb-1: nam ngay phia tren bubble
-                        - Backdrop: lop trong suot phu toan man hinh, click = dong
-                    -->
-                    @if(aciveEmojiPicker() === msg.id) {
-                    <!-- Backdrop: click bat ky dau tren man hinh → dong picker -->
-                    <div class="fixed inset-0 z-20" (click)="closeEmojiPicker()"></div>
-                    <div
-                        class="absolute -top-2 right-0 z-30 bg-white shadow-xl rounded-2xl border border-gray-100 px-2 py-1.5 flex gap-0.5">
-                        @for(type of getReactionTypes(); track type) {
-                        <button (click)="onReact(msg.id, type)"
-                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-xl transition-all hover:scale-125 active:scale-95">
-                            {{ reactionEmojis[type] }}
-                        </button>
-                        }
-                    </div>
-                    }
-                </div>
-            </div>
-
-            <!-- A1: Reactions display (duoi bubble, can phai) -->
-            @if(msg.reactions && msg.reactions.length > 0) {
-            <div class="flex gap-1 flex-wrap justify-end -mt-1 mr-1">
-                @for(reaction of msg.reactions; track reaction.type) {
-                <button (click)="onReact(msg.id, reaction.type)"
-                    class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs border shadow-sm transition-all hover:scale-105"
-                    [class.bg-blue-50]="reaction.userReacted" [class.border-blue-300]="reaction.userReacted"
-                    [class.bg-white]="!reaction.userReacted" [class.border-gray-200]="!reaction.userReacted">
-                    <span class="text-sm">{{ reaction.emoji }}</span>
-                    <span class="text-gray-500 font-medium">{{ reaction.count }}</span>
-                </button>
-                }
-            </div>
-            }
-
-            <!-- Time + tick (hien khi hover) -->
-            <div class="flex items-center gap-1 mr-2 opacity-0 group-hover/msg:opacity-100 transition-opacity">
-                <span class="text-[11px] text-gray-400">{{ msg.createAt }}</span>
-                @if(msg.isRead){
-                <svg class="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2.5">
-                    <path d="M18 7l-8.5 8.5L6 12" />
-                    <path d="M22 7l-8.5 8.5L12 14" />
-                </svg>
-                } @else {
-                <svg class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2.5">
-                    <path d="M18 7l-8.5 8.5L6 12" />
-                </svg>
-                }
-            </div>
-        </div>
-        }
-
-        <!-- =========================================== -->
-        <!-- TIN NHAN NGUOI KHAC (ben trai - mau xam)    -->
-        <!-- =========================================== -->
-        @else {
-        <div class="flex gap-2.5 max-w-[70%] group/msg">
-            <!-- Avatar -->
-            <img [src]="'https://ui-avatars.com/api/?name=' + msg.senderName + '&background=random'"
-                class="w-8 h-8 rounded-full mt-auto mb-1 shadow-sm">
-
-            <div class="flex flex-col gap-0.5">
-
-                <!-- A2: Quoted reply (hien phia TREN bubble) -->
-                @if(msg.replyToId){
-                <div
-                    class="bg-gray-200/70 text-gray-600 text-xs px-3 py-1.5 rounded-xl border-l-2 border-blue-400 w-fit max-w-full">
-                    <span class="font-semibold text-blue-600 text-[11px]">{{ msg.replyToSenderName }}</span>
-                    <p class="truncate opacity-80">{{ msg.replyToContent }}</p>
-                </div>
-                }
-
-                <!-- 
-                    HANG CHINH: [bubble (voi emoji button goc duoi)] + [reply button]
-                -->
-                <div class="flex items-end gap-1">
-
-                    <!-- BUBBLE + EMOJI BUTTON -->
-                    <div class="relative">
-                        <!-- Bubble noi dung -->
-                        <div class="bg-gray-100 text-gray-800 px-4 py-2.5 rounded-2xl rounded-bl-sm shadow-sm">
-                            <span class="block text-xs font-bold text-blue-600 mb-0.5">{{ msg.senderName }}</span>
-                            <p class="leading-relaxed text-[15px]">{{ msg.content }}</p>
-                        </div>
-
-                        <!-- NUT EMOJI — goc duoi-PHAI cua bubble -->
-                        <div class="absolute -bottom-2.5 -right-2.5 transition-all" [ngClass]="aciveEmojiPicker() === msg.id 
-                                ? 'opacity-100' 
-                                : 'opacity-0 group-hover/msg:opacity-100'">
-                            <button (click)="toggleEmojiPicker(msg.id); $event.stopPropagation()"
-                                class="w-7 h-7 flex items-center justify-center rounded-full bg-white shadow-md border border-gray-100 text-gray-400 hover:text-yellow-500 hover:border-yellow-200 transition-all hover:scale-110">
-                                <app-ui-icon name="smile" [size]="14"></app-ui-icon>
-                            </button>
-                        </div>
-
-                        <!-- EMOJI PICKER POPUP (tach rieng, dinh vi theo bubble) -->
-                        @if(aciveEmojiPicker() === msg.id) {
-                        <div class="fixed inset-0 z-20" (click)="closeEmojiPicker()"></div>
-                        <div
-                            class="absolute -top-2 left-0 z-30 bg-white shadow-xl rounded-2xl border border-gray-100 px-2 py-1.5 flex gap-0.5">
-                            @for(type of getReactionTypes(); track type) {
-                            <button (click)="onReact(msg.id, type)"
-                                class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-xl transition-all hover:scale-125 active:scale-95">
-                                {{ reactionEmojis[type] }}
-                            </button>
-                            }
-                        </div>
-                        }
-                    </div>
-
-                    <!-- Nut Reply (ben phai bubble, hien khi hover) -->
-                    <button (click)="onReplyMessage(msg)"
-                        class="p-1.5 mb-1 text-gray-300 hover:text-blue-500 rounded-full hover:bg-blue-50/80 transition-all opacity-0 group-hover/msg:opacity-100"
-                        title="Reply">
-                        <app-ui-icon name="corner-up-left" [size]="16"></app-ui-icon>
-                    </button>
-                </div>
-
-                <!-- A1: Reactions display (duoi bubble, can trai) -->
-                @if(msg.reactions && msg.reactions.length > 0) {
-                <div class="flex gap-1 flex-wrap -mt-1 ml-1">
-                    @for(reaction of msg.reactions; track reaction.type) {
-                    <button (click)="onReact(msg.id, reaction.type)"
-                        class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs border shadow-sm transition-all hover:scale-105"
-                        [class.bg-blue-50]="reaction.userReacted" [class.border-blue-300]="reaction.userReacted"
-                        [class.bg-white]="!reaction.userReacted" [class.border-gray-200]="!reaction.userReacted">
-                        <span class="text-sm">{{ reaction.emoji }}</span>
-                        <span class="text-gray-500 font-medium">{{ reaction.count }}</span>
-                    </button>
-                    }
-                </div>
-                }
-
-                <!-- Time (hien khi hover) -->
-                <span class="text-[11px] text-gray-400 ml-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
-                    {{ msg.createAt }}
-                </span>
-            </div>
-        </div>
-        }
-
-        }
-
+    @if(store.messages().length === 0){
+    <div class="text-center text-gray-400 mt-10">
+      <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path
+            d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-800 mb-1">No messages yet</h3>
+      <p class="text-sm">Start the conversation by sending a message.</p>
     </div>
+    }
 
-    <!-- typing indicator -->
-    <!--  -->
-    @if(store.typingUser()){
-    <div class="flex items-center gap-2 px-10 py-2">
-        <div class="flex gap-1">
-            <!-- 
+    <!--  Lap qua d.s tin nhan -->
+    @for(msg of store.messages(); track $index){
+    <div class="flex flex-col mb-4 w-full">
+      @if(msg.content){
+      <app-message-bubble [message]="msg" [activeEmojiId]="aciveEmojiPicker()" (reply)="onReplyMessage($event)"
+        (react)="onReactFromBubble($event)"
+        (emojiToggle)="aciveEmojiPicker.set(aciveEmojiPicker() === $event ? null : $event)"
+        (emojiClose)="aciveEmojiPicker.set(null)">
+      </app-message-bubble>
+      }
+
+      <!-- ===== Attachments: Ảnh ===== -->
+      @if (msg.attachments && msg.attachments.length > 0) {
+      <div class="flex flex-col gap-2 mt-1.5 max-w-[70%]" [class.ml-auto]="msg.isMine" [class.items-end]="msg.isMine"
+        [class.items-start]="!msg.isMine">
+        <!-- Ảnh: hiện inline dạng gallery -->
+        @if (hasImages(msg)) {
+        <div class="flex flex-wrap gap-1" [class.justify-end]="msg.isMine" [class.grid]="getImages(msg).length > 1"
+          [class.grid-cols-2]="getImages(msg).length > 1">
+          @for (att of getImages(msg); track att.fileId) {
+          <a [href]="att.url" target="_blank" (click)="openImagePreview(att.url, att.fileName, $event)"
+            class="block rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+            <img [src]="(att.thumbnailUrl || att.url)" [alt]="att.fileName"
+              class="max-w-[280px] max-h-[200px] object-cover rounded-lg" loading="lazy" />
+          </a>
+          }
+        </div>
+        }
+
+        <!-- Document/File: hiện card download -->
+        @for (att of getDocuments(msg); track att.fileId) {
+        <a [href]="att.url " download [class.bg-blue-50]="msg.isMine" [class.border-blue-200]="msg.isMine"
+          [class.dark:bg-blue-950]="msg.isMine"
+          class="flex items-center gap-3 mt-1 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-100 transition-colors max-w-[280px]">
+          <app-ui-icon name="fileText" [size]="24" class="text-gray-400 shrink-0"></app-ui-icon>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">{{ att.fileName }}</p>
+            <p class="text-xs text-gray-400">{{ formatFileSize(att.size) }}</p>
+          </div>
+        </a>
+        }
+      </div>
+      }
+    </div>
+    }
+
+  </div>
+
+  <!-- typing indicator -->
+  <!--  -->
+  @if(store.typingUser()){
+  <div class="flex items-center gap-2 px-10 py-2">
+    <div class="flex gap-1">
+      <!--
                     animate-bounce: nhay len xuong (tailwind)
                     animation-delay: delay 0.1s, 0.2s - hieu ung 3 cham nhay lan luot
                     inline style vi tailwind ko co san class delay
                 -->
-            <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
-            <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
-            <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
-        </div>
-        <span class="text-xs text-gray-400 italic">
-            {{ store.typingUser()}} is typing...
-        </span>
+      <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
+      <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+      <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
     </div>
-    }
-    <!-- Footer: o nhap tin nhan + content reply message-->
-    <!-- messageSent: khi user gui tin -> nhan content -> goi onMessage(content) -->
-    @if(store.replyingTo()){
-    <div class="px-4 py-2 bg-gray-50 broder-t border-gray-200 flex items-center gap-3">
-        <div class="w-1 h-10 bg-blue-500 rounded-full flex-shrink-0"></div>
+    <span class="text-xs text-gray-400 italic">
+      {{ store.typingUser()}} is typing...
+    </span>
+  </div>
+  }
+  <!-- Footer: o nhap tin nhan + content reply message-->
+  <!-- messageSent: khi user gui tin -> nhan content -> goi onMessage(content) -->
+  @if(store.replyingTo()){
+  <div class="px-4 py-2 bg-gray-50 broder-t border-gray-200 flex items-center gap-3">
+    <div class="w-1 h-10 bg-blue-500 rounded-full flex-shrink-0"></div>
 
-        <div class="flex-1 min-w-0">
-            <p class="text-xs font-semibold text-blue-600">
-                Replying to {{ store.replyingTo()?.senderName}}
-            </p>
-            <p class="text-sm text-gray-500 truncate">
-                {{store.replyingTo()?.content}}
-            </p>
-        </div>
-        <button (click)="onCancelReply()"
-            class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
-            <app-ui-icon name="x" [size]="14"></app-ui-icon>
-        </button>
+    <div class="flex-1 min-w-0">
+      <p class="text-xs font-semibold text-blue-600">
+        Replying to {{ store.replyingTo()?.senderName}}
+      </p>
+      <p class="text-sm text-gray-500 truncate">
+        {{store.replyingTo()?.content}}
+      </p>
     </div>
-    }
-    <app-chat-input [conversationId]="conversationId() ?? ''" [participantIds]="store.participantIds()"
-        (messageSent)="onSendMessage($any($event))"></app-chat-input>
+    <button (click)="onCancelReply()"
+      class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+      <app-ui-icon name="x" [size]="14"></app-ui-icon>
+    </button>
+  </div>
+  }
+  <app-chat-input [conversationId]="conversationId() ?? ''" [participantIds]="store.participantIds()"
+    (messageSent)="onSendMessage($any($event))" (messageWithFiles)="onSendMessageWithFiles($event)"></app-chat-input>
 </div>
 
 @if(showAddMemberDialog()){
 <app-add-member-dialog [conversationId]="conversationId()!" [existingMembersId]="getExistingMemberIds()"
-    (close)="onCloseAddMemberDialog()" (membersAdded)="onMembersAdded()">
+  (close)="onCloseAddMemberDialog()" (membersAdded)="onMembersAdded()">
 
 </app-add-member-dialog>
 }
+<!-- GIAO DIỆN MODAL PHÓNG TO HÌNH ẢNH (LIGHTBOX) -->
+@if (previewImage()) {
+<div
+  class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm p-4 transition-all duration-300"
+  (click)="closeImagePreview()">
+
+  <!-- Nút đóng (X) nằm ở góc phải phía trên -->
+  <button
+    class="absolute top-6 right-6 p-2 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all focus:outline-none shadow-md cursor-pointer z-55"
+    (click)="closeImagePreview(); $event.stopPropagation()">
+    <app-ui-icon name="x" [size]="24"></app-ui-icon>
+  </button>
+
+  <!-- Nút tải ảnh xuống (Download) ở cạnh nút Close -->
+  <a [href]="previewImage()?.url" download [download]="previewImage()?.fileName"
+    class="absolute top-6 right-20 p-2 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all focus:outline-none shadow-md cursor-pointer z-55 flex items-center justify-center"
+    (click)="$event.stopPropagation()">
+    <app-ui-icon name="download" [size]="22"></app-ui-icon>
+  </a>
+
+  <!-- Khung chứa ảnh lớn ở trung tâm -->
+  <div class="max-w-[90vw] max-h-[80vh] flex items-center justify-center select-none"
+    (click)="$event.stopPropagation()">
+    <img [src]="previewImage()?.url" [alt]="previewImage()?.fileName"
+      class="max-w-[90vw] max-h-[80vh] object-contain rounded-lg shadow-xl transition-transform duration-300 hover:scale-[1.0]" />
+  </div>
+
+  <!-- Dòng text hiển thị tên ảnh phía dưới cùng -->
+  <span class="text-white/80 text-sm mt-4 font-medium tracking-wide truncate max-w-[80%] drop-shadow-md">
+    {{ previewImage()?.fileName }}
+  </span>
+</div>
+}
+
+
 }
 @else{
 <!-- EMPTY STATE -->
 <div class="flex flex-col items-center justify-center h-full bg-gray-50 text-center px-6">
-    <!-- Icon Lon -->
-    <div class="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center mb-6">
-        <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
-        </svg>
-    </div>
+  <!-- Icon Lon -->
+  <div class="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center mb-6">
+    <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+    </svg>
+  </div>
 
-    <!-- Tieu de -->
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome to Chat!</h2>
+  <!-- Tieu de -->
+  <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome to Chat!</h2>
 
-    <!-- Mo ta -->
-    <p class="text-gray-500 max-w-sm mb-6">
-        Select a conversation from the sidebar to start chatting, or create a new one.
-    </p>
+  <!-- Mo ta -->
+  <p class="text-gray-500 max-w-sm mb-6">
+    Select a conversation from the sidebar to start chatting, or create a new one.
+  </p>
 
-    <!-- Nút tạo chat mới (tùy chọn) -->
-    <button (click)="goBack()"
-        class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all active:scale-95">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        Start New Chat
-    </button>
+  <!-- Nút tạo chat mới (tùy chọn) -->
+  <button (click)="goBack()"
+    class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all active:scale-95">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+    Start New Chat
+  </button>
 </div>
 }
 
-<!-- 
+<!--
     === Ly Thuyet ===
 
 1. @if / @else (Angular 17+):
@@ -338,6 +209,6 @@
 
 2. conversationId():
     - goi signal nhu mot ham de lay gia tri hien tai
-    - neu URL la "/" -> null/undefined -> @else duoc render 
+    - neu URL la "/" -> null/undefined -> @else duoc render
     - neu URL la "c/abc123" -> "abc123" -> @if duoc render
 -->

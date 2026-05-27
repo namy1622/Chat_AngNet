@@ -3,7 +3,7 @@ import { ConversationDto } from "../models/conversation.dto";
 import { GroupMemberDto } from "../models/group-member.dto";
 import { MessageDto } from "../models/message.dto";
 import { ChatService } from "../services/chat.service";
-import { SignalrService } from "../../../core/services/signalr.service";
+import { SignalrService, ReceiveMessagePayload } from "../../../core/services/signalr.service";
 import { AuthService } from "../../../core/services/auth.service";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { firstValueFrom } from "rxjs";
@@ -91,14 +91,14 @@ export const ChatStore = signalStore(
                         console.error('-- Error loading members:', err);
                     }
                 },
-                async sendMessage(conversationId: string, content: string) {
+                async sendMessage(conversationId: string, content: string, fileIds?: string[]) {
                     const replyId = store.replyingTo()?.id;
 
                     // Clear typing khi gửi xong
                     if (typingTimeout) clearTimeout(typingTimeout);
                     patchState(store, { typingUser: null });
                     try {
-                        await firstValueFrom(chatService.sendMessage(conversationId, content, replyId));
+                        await firstValueFrom(chatService.sendMessage(conversationId, content, replyId, fileIds));
                         patchState(store, { replyingTo: null }); // Reset reply trạng thái
                     } catch (err) {
                         console.error('-- Error sending message:', err);
@@ -115,21 +115,27 @@ export const ChatStore = signalStore(
                 // --- CÀI ĐẶT SIGNALR (Lắng nghe Real-time) ---
                 _setupSignalRListeners() {
                     // 1. Có tin nhắn mới
-                    signalrService.addReceiveMessageListener((senderId, user, message, convId, replyToId, replyContent) => {
-                        const isMine = senderId.toLowerCase() === currentUser()?.id.toLowerCase();
+                    signalrService.addReceiveMessageListener((payload: ReceiveMessagePayload) => {
+                        const isMine = payload.senderId.toLowerCase() === currentUser()?.id.toLowerCase();
                         const newMessage: MessageDto = {
                             id: crypto.randomUUID(),
-                            senderId: senderId,
-                            senderName: user,
-                            content: message,
+                            senderId: payload.senderId,
+                            senderName: payload.senderName,
+                            content: payload.content,
                             createAt: new Date().toLocaleDateString([], { hour: '2-digit', minute: '2-digit' }),
                             isMine: isMine,
                             isRead: false,
-                            replyToId: replyToId || undefined,
-                            replyToContent: replyContent || undefined,
+                            replyToId: payload.replyToId || undefined,
+                            replyToContent: payload.replyContent || undefined,
+                            //-----File Attachments-----
+                            messageType: payload.attachments && payload.attachments.length > 0 ? 1 : 0, // 0=Text, 1=Image/File
+                            attachments: payload.attachments || []
                         };
 
-                        patchState(store, { messages: [...store.messages(), newMessage] });
+                        // Chỉ thêm tin nhắn mới vào cửa sổ chat nếu nó thuộc về phòng chat đang mở
+                        if (payload.conversationId === store.activeConversationId()) {
+                            patchState(store, { messages: [...store.messages(), newMessage] });
+                        }
                     });
                     // 2. Đã xem tin nhắn
                     signalrService.addMessageReadListener((convId, readByUserId) => {

@@ -30,5 +30,21 @@ namespace ChatServer.Application.Features.Chat.Queries.GetMessages.Dto
 
         //-- reactions --
         public List<ReactionSummaryDto> Reactions { set; get; } = new();
+
+        //-- file attachments --
+        public int MessageType { get; set; }  // 0=Text, 1=Image, 2=File, ...
+        public List<AttachmentDto> Attachments { get; set; } = new();
+    }
+
+    // ===== DTO cho file đính kèm =====
+    public class AttachmentDto
+    {
+        public long FileId { get; set; }
+        public string FileName { get; set; } = default!;  // tên gốc
+        public string Url { get; set; } = default!;       // "/api/file/{id}"
+        public string? ThumbnailUrl { get; set; }          // "/api/file/{id}/thumbnail"
+        public string ContentType { get; set; } = default!;
+        public long Size { get; set; }
+        public string FileType { get; set; } = default!;   // "Image", "Document"
     }
 }

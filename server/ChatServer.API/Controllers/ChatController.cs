@@ -11,8 +11,11 @@ using ChatServer.Application.Features.Chat.Queries.ConversationByMessageId;
 using ChatServer.Application.Features.Chat.Queries.GetConversationById;
 using ChatServer.Application.Features.Chat.Queries.GetConversations;
 using ChatServer.Application.Features.Chat.Queries.GetGroupMembers;
+using ChatServer.Application.Features.Chat.Queries.GetMessageAttachmentsQueries;
 using ChatServer.Application.Features.Chat.Queries.GetMessageById;
 using ChatServer.Application.Features.Chat.Queries.GetMessages;
+using ChatServer.Application.Features.Chat.Queries.GetMessages.Dto;
+using ChatServer.Domain.Enum;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -92,31 +95,19 @@ namespace ChatServer.API.Controllers
                     request.ConversationId, 
                     request.Content ?? "", 
                     senderId,
-                    request.ReplyToId);
+                    request.ReplyToId,
+                    request.FileIds);
 
                 // goi mediator -> cho handler chay -> tra ve messageId
                 var messageId = await _mediator.Send(command);
 
-                // chi gui SignalR cho client trong conversation
-                // o day lam don gian: gui cho CurrentUser va TargetUser 
-                // thuc te nen query lay list participant cua conversation roi gui tung nguoi
-
-                // tam thoi dam bao gui 1-1 (sender va receiver) truoc
-                // client phai gui kem TargetUserId trong request  - hoac query db lay ra 
-
-                // cach tam thoi: ban tin nhan test duoc luon ma ko can sua nhieu logic
-                // dung Clients.All truoc (logic lau participant phuc tap hon chut)
-                // De lam chuan can Controller can biet ai la nguoi nhan (targetUser)
-
-                // tam thoi giu nguyen SendAsync cho All (buoc 1 setup ow tren la quan trong nhat)
-
-                //----------------------------------
-                // lay list member cua conversation 
-                // tuy cach ban query -> o day dung IChatContext 
-                // se co cach khac : tao query GetConversationParticipantsQuery -> tra ve list userId -> gui tung nguoi
-                // (co the tao query rieng cho viec nay)
-                // ban mess cho tung member (tru sender) qua group rieng cu ho
-                // thay vi Clients.All -> chi gui nhung nguoi lien quan (tru sender) -> Clients.Group(conversationId.ToString())
+                // - query attachments để gửi qua SignalR -
+                var attachments = new List<AttachmentDto>();
+                if (request.FileIds != null && request.FileIds.Count > 0)
+                {
+                    var files = await _mediator.Send(new GetMessageAttachmentsQuery(messageId));
+                    attachments = files;
+                }
 
                 var participants = await _mediator.Send(new GetConversationParticipantsQuery(request.ConversationId));
 
@@ -124,19 +115,20 @@ namespace ChatServer.API.Controllers
                 {
                     await _chatHubContext.Clients
                         .Group($"user_{paticipantId}")
-                        .SendAsync("ReceiveMessage", 
-                        senderId.ToString(), 
-                        senderName, 
-                        request.Content, 
-                        request.ConversationId.ToString(),
-                        request.ReplyToId.ToString() ?? "",
-                        request.ReplyToId != null ? await GetReplyContent(request.ReplyToId.Value) : "");
+                        .SendAsync("ReceiveMessage", new
+                        {
+                            senderId = senderId.ToString(),
+                            senderName,
+                            content = request.Content,
+                            conversationId = request.ConversationId.ToString(),
+                            replyToId = request.ReplyToId.ToString() ?? "",
+                            replyContent =  request.ReplyToId != null ? await GetReplyContent(request.ReplyToId.Value) : "",
+                            messageType = request.FileIds?.Count > 0 ? MessageType.File : MessageType.Text,
+                            attachments = attachments
+                        });
                 }
                 // them conversationId vao payload de Frontend biet tin nhan thuoc conversation nao
 
-                // 4. sau khi luu thanh cong -> ban signalR cho client
-                // Update: Gui ca SenderId de Client biet tin nhan cua ai
-                //await _chatHubContext.Clients.All.SendAsync("ReceiveMessage", senderId, senderName, request.Content);
 
                 return Ok(new { messageId = messageId });
             }

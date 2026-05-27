@@ -12,7 +12,7 @@ import { ConversationDto } from '../../models/conversation.dto';
 import { UserDto } from '../../models/user.dto';
 import { UserService } from '../../../../core/services/user.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { SignalrService } from '../../../../core/services/signalr.service';
+import { ReceiveMessagePayload, SignalrService } from '../../../../core/services/signalr.service';
 import { CreateGroupDialogComponent } from "../create-group-dialog/create-group-dialog.component";
 import { ConversationListComponent } from '../conversation-list/conversation-list.component';
 import { List } from 'lucide-angular';
@@ -85,7 +85,8 @@ export class SidebarComponent {
     this.loadConversations();
 
     //-- lang nghe tin nhan moi tu SignalR de cap nhat Sidebar--
-    this.signalrService.addReceiveMessageListener((senderId, senderName, content, conversationId) => {
+    this.signalrService.addReceiveMessageListener((payload: ReceiveMessagePayload) => {
+      const { conversationId, content, attachments } = payload;
       // kiem tra conversation co trong list chua
       const exists = this.conversations().find(c => c.id === conversationId);
 

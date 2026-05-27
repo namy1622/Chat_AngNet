@@ -19,9 +19,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     // neu co token -> clone request cu + gan them header authorization
     if (token) {
         authReq = req.clone({
-            setHeaders: {
-                Authorization: `Bearer ${token}` // bear token
-            }
+            withCredentials: true
+            // setHeaders: {
+            //     Authorization: `Bearer ${token}` // bear token
+            // }
         });
         // cho phep request (da them token vao header) di tiep
         // return next(cloneReq);

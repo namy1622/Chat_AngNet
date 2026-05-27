@@ -1,3 +1,4 @@
+import { AttachmentDto } from "./attachment.dto";
 import { ReactionDto } from "./reaction.dto";
 
 export interface MessageDto {
@@ -15,4 +16,8 @@ export interface MessageDto {
     replyToSenderName?: string; // ten nguoi gui tin nhan goc
 
     reactions?: ReactionDto[];
+
+     // ===== file attachments =====
+    messageType?: number;           // 0=Text, 1=Image, 2=File, 3=Video, 4=Audio
+    attachments?: AttachmentDto[];   // danh sách file đính kèm
 }

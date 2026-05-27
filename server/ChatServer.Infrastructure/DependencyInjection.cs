@@ -1,8 +1,10 @@
 using ChatServer.Application.Common.Interfaces.Authentication;
 using ChatServer.Application.Common.Interfaces.Persistence;
+using ChatServer.Application.Common.Interfaces.Services;
 using ChatServer.Infrastructure.Authentication;
 using ChatServer.Infrastructure.Data;
 using ChatServer.Infrastructure.Persitence;
+using ChatServer.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -62,6 +64,11 @@ namespace ChatServer.Infrastructure
             // dki ChatDbContext de su dung trong Application
             services.AddScoped<IChatContext>(provider => provider.GetRequiredService<ChatDbContext>());
 
+            // ===== Đăng ký File Storage & Image Processing =====
+            // Scoped: mỗi HTTP request tạo 1 instance mới
+            services.AddScoped<IFileStorageService, LocalFileStorageService>();
+            services.AddScoped<IImageProcessor, SkiaImageProcessor>();
+
             //----------------------------------------------
             // Cấu hình Authentication (JWT)
             // Phải cài đặt Package: Microsoft.AspNetCore.Authentication.JwtBearer
@@ -86,20 +93,50 @@ namespace ChatServer.Infrastructure
                         System.Text.Encoding.UTF8.GetBytes(jwtSettings.Secret))
                 };
 
-                // Cấu hình để lấy Token từ Query String cho SignalR
+                // ===== ĐỌC TOKEN TỪ NHIỀU NGUỒN (Cookie, SignalR, URL) =====
                 options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
                 {
                     OnMessageReceived = context =>
                     {
-                        var accessToken = context.Request.Query["access_token"];
+                        // 1. Thử lấy token từ Cookie (dùng cho các API chính & hiển thị ảnh thẻ img)
+                        var cookieToken = context.Request.Cookies["token"];
+                        if (!string.IsNullOrEmpty(cookieToken))
+                        {
+                            context.Token = cookieToken;
+                            return Task.CompletedTask;
+                        }
+                        // 2. Thử lấy token từ Query String (Dùng cho kết nối WebSocket của SignalR)
+                        var accessToken = context.Request.Query["access_token"].ToString();
                         var path = context.HttpContext.Request.Path;
                         if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/api/chatHub"))
                         {
                             context.Token = accessToken;
+                            return Task.CompletedTask;
+                        }
+                        // 3. Thử lấy từ query string bình thường (Dự phòng cho file download)
+                        var queryToken = context.Request.Query["token"].ToString();
+                        if (!string.IsNullOrEmpty(queryToken))
+                        {
+                            context.Token = queryToken;
                         }
                         return Task.CompletedTask;
                     }
                 };
+
+                // Cấu hình để lấy Token từ Query String cho SignalR
+                //options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                //{
+                //    OnMessageReceived = context =>
+                //    {
+                //        var accessToken = context.Request.Query["access_token"];
+                //        var path = context.HttpContext.Request.Path;
+                //        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/api/chatHub"))
+                //        {
+                //            context.Token = accessToken;
+                //        }
+                //        return Task.CompletedTask;
+                //    }
+                //};
             });
 
             return services;

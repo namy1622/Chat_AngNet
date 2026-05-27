@@ -1,1 +1,135 @@
-<p>message-bubble works!</p>
+@let msg = message();
+@let isActive = activeEmojiId() === msg.id;
+@if(msg.isMine) {
+<div class="flex flex-col items-end gap-0.5 ml-auto max-w-[70%] group/msg">
+  @if(msg.replyToContent) {
+  <div class="bg-blue-100/70 text-blue-700 text-xs px-3 py-1.5 rounded-xl border-l-2 border-blue-400 w-fit max-w-full">
+    <span class="font-semibold text-blue-600 text-[11px]">{{ msg.replyToSenderName }}</span>
+    <p class="truncate opacity-80">{{ msg.replyToContent }}</p>
+  </div>
+  }
+  <div class="flex items-end gap-1">
+    <button (click)="reply.emit(msg)"
+      class="p-1.5 mb-1 text-gray-300 hover:text-blue-500 rounded-full hover:bg-blue-50/80 transition-all opacity-0 group-hover/msg:opacity-100"
+      title="Reply">
+      <app-ui-icon name="corner-up-left" [size]="16"></app-ui-icon>
+    </button>
+    <div class="relative">
+      <div class="bg-blue-600 text-white px-4 py-2.5 rounded-2xl rounded-br-sm shadow-md shadow-blue-500/15">
+        <p class="leading-relaxed text-[15px]">{{ msg.content }}</p>
+      </div>
+      <div class="absolute -bottom-2.5 -left-2.5 transition-all"
+        [ngClass]="isActive ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100'">
+        <button (click)="emojiToggle.emit(msg.id); $event.stopPropagation()"
+          class="w-7 h-7 flex items-center justify-center rounded-full bg-white shadow-md border border-gray-100 text-gray-400 hover:text-yellow-500 hover:border-yellow-200 transition-all hover:scale-110">
+          <app-ui-icon name="smile" [size]="14"></app-ui-icon>
+        </button>
+      </div>
+      @if(isActive) {
+      <div class="fixed inset-0 z-20" (click)="emojiClose.emit()"></div>
+      <div
+        class="absolute -top-2 right-0 z-30 bg-white shadow-xl rounded-2xl border border-gray-100 px-2 py-1.5 flex gap-0.5">
+        @for(type of getReactionTypes(); track type) {
+        <button (click)="react.emit({ messageId: msg.id, reactionType: type })"
+          class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-xl transition-all hover:scale-125 active:scale-95">
+          {{ reactionEmojis[type] }}
+        </button>
+        }
+      </div>
+      }
+    </div>
+  </div>
+  @if(msg.reactions && msg.reactions.length > 0) {
+  <div class="flex gap-1 flex-wrap justify-end -mt-1 mr-1">
+    @for(reaction of msg.reactions; track reaction.type) {
+    <button (click)="react.emit({ messageId: msg.id, reactionType: reaction.type })"
+      class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs border shadow-sm transition-all hover:scale-105"
+      [class.bg-blue-50]="reaction.userReacted" [class.border-blue-300]="reaction.userReacted"
+      [class.bg-white]="!reaction.userReacted" [class.border-gray-200]="!reaction.userReacted">
+      <span class="text-sm">{{ reaction.emoji }}</span>
+      <span class="text-gray-500 font-medium">{{ reaction.count }}</span>
+    </button>
+    }
+  </div>
+  }
+  <div class="flex items-center gap-1 mr-2 opacity-0 group-hover/msg:opacity-100 transition-opacity">
+    <span class="text-[11px] text-gray-400">{{ msg.createAt }}</span>
+    @if(msg.isRead){
+    <svg class="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M18 7l-8.5 8.5L6 12" />
+      <path d="M22 7l-8.5 8.5L12 14" />
+    </svg>
+    } @else {
+    <svg class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M18 7l-8.5 8.5L6 12" />
+    </svg>
+    }
+  </div>
+</div>
+}
+@else {
+<div class="flex gap-2.5 max-w-[70%] group/msg">
+  <img [src]="'https://ui-avatars.com/api/?name=' + msg.senderName + '&background=random'"
+    class="w-8 h-8 rounded-full mt-auto mb-1 shadow-sm">
+  <div class="flex flex-col gap-0.5">
+    @if(msg.replyToId){
+    <div
+      class="bg-gray-200/70 text-gray-600 text-xs px-3 py-1.5 rounded-xl border-l-2 border-blue-400 w-fit max-w-full">
+      <span class="font-semibold text-blue-600 text-[11px]">{{ msg.replyToSenderName }}</span>
+      <p class="truncate opacity-80">{{ msg.replyToContent }}</p>
+    </div>
+    }
+    <div class="flex items-end gap-1">
+      <div class="relative">
+        <div class="bg-gray-100 text-gray-800 px-4 py-2.5 rounded-2xl rounded-bl-sm shadow-sm">
+          <span class="block text-xs font-bold text-blue-600 mb-0.5">{{ msg.senderName }}</span>
+          <p class="leading-relaxed text-[15px]">{{ msg.content }}</p>
+        </div>
+
+
+
+        <div class="absolute -bottom-2.5 -right-2.5 transition-all"
+          [ngClass]="isActive ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100'">
+          <button (click)="emojiToggle.emit(msg.id); $event.stopPropagation()"
+            class="w-7 h-7 flex items-center justify-center rounded-full bg-white shadow-md border border-gray-100 text-gray-400 hover:text-yellow-500 hover:border-yellow-200 transition-all hover:scale-110">
+            <app-ui-icon name="smile" [size]="14"></app-ui-icon>
+          </button>
+        </div>
+        @if(isActive) {
+        <div class="fixed inset-0 z-20" (click)="emojiClose.emit()"></div>
+        <div
+          class="absolute -top-2 left-0 z-30 bg-white shadow-xl rounded-2xl border border-gray-100 px-2 py-1.5 flex gap-0.5">
+          @for(type of getReactionTypes(); track type) {
+          <button (click)="react.emit({ messageId: msg.id, reactionType: type })"
+            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-xl transition-all hover:scale-125 active:scale-95">
+            {{ reactionEmojis[type] }}
+          </button>
+          }
+        </div>
+        }
+      </div>
+      <button (click)="reply.emit(msg)"
+        class="p-1.5 mb-1 text-gray-300 hover:text-blue-500 rounded-full hover:bg-blue-50/80 transition-all opacity-0 group-hover/msg:opacity-100"
+        title="Reply">
+        <app-ui-icon name="corner-up-left" [size]="16"></app-ui-icon>
+      </button>
+    </div>
+    @if(msg.reactions && msg.reactions.length > 0) {
+    <div class="flex gap-1 flex-wrap -mt-1 ml-1">
+      @for(reaction of msg.reactions; track reaction.type) {
+      <button (click)="react.emit({ messageId: msg.id, reactionType: reaction.type })"
+        class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs border shadow-sm transition-all hover:scale-105"
+        [class.bg-blue-50]="reaction.userReacted" [class.border-blue-300]="reaction.userReacted"
+        [class.bg-white]="!reaction.userReacted" [class.border-gray-200]="!reaction.userReacted">
+        <span class="text-sm">{{ reaction.emoji }}</span>
+        <span class="text-gray-500 font-medium">{{ reaction.count }}</span>
+      </button>
+      }
+    </div>
+    }
+    <span class="text-[11px] text-gray-400 ml-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
+      {{ msg.createAt }}
+    </span>
+  </div>
+</div>
+}

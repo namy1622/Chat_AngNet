@@ -72,7 +72,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("ReceiverId");
 
-                    b.ToTable("CallSessions", (string)null);
+                    b.ToTable("CallSessions");
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.Conversation", b =>
@@ -110,7 +110,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("LastMessageId");
 
-                    b.ToTable("Conversations", (string)null);
+                    b.ToTable("Conversations");
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.ConversationParticipant", b =>
@@ -152,7 +152,56 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ConversationParticipants", (string)null);
+                    b.ToTable("ConversationParticipants");
+                });
+
+            modelBuilder.Entity("ChatServer.Domain.Entities.FileAttachment", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FileType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ThumbnailPath")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UploadedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UploadedByUserId");
+
+                    b.ToTable("FileAttachments");
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.Friendship", b =>
@@ -188,7 +237,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("RequesterId");
 
-                    b.ToTable("Friendships", (string)null);
+                    b.ToTable("Friendships");
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.Message", b =>
@@ -235,7 +284,33 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
+                });
+
+            modelBuilder.Entity("ChatServer.Domain.Entities.MessageAttachment", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("FileAttachmentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FileAttachmentId");
+
+                    b.HasIndex("MessageId");
+
+                    b.ToTable("MessageAttachments");
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.MessageReaction", b =>
@@ -262,7 +337,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("MessageReactions", (string)null);
+                    b.ToTable("MessageReactions");
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.MessageReadState", b =>
@@ -280,7 +355,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("MessageReadStates", (string)null);
+                    b.ToTable("MessageReadStates");
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.Notification", b =>
@@ -321,7 +396,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.User", b =>
@@ -376,7 +451,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.UserDevice", b =>
@@ -405,7 +480,7 @@ namespace ChatServer.Infrastructure.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserDevices", (string)null);
+                    b.ToTable("UserDevices");
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.CallSession", b =>
@@ -461,6 +536,17 @@ namespace ChatServer.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ChatServer.Domain.Entities.FileAttachment", b =>
+                {
+                    b.HasOne("ChatServer.Domain.Entities.User", "UploadedBy")
+                        .WithMany()
+                        .HasForeignKey("UploadedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("UploadedBy");
+                });
+
             modelBuilder.Entity("ChatServer.Domain.Entities.Friendship", b =>
                 {
                     b.HasOne("ChatServer.Domain.Entities.User", "Addressee")
@@ -503,6 +589,25 @@ namespace ChatServer.Infrastructure.Data.Migrations
                     b.Navigation("ReplyTo");
 
                     b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("ChatServer.Domain.Entities.MessageAttachment", b =>
+                {
+                    b.HasOne("ChatServer.Domain.Entities.FileAttachment", "FileAttachment")
+                        .WithMany("MessageAttachments")
+                        .HasForeignKey("FileAttachmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ChatServer.Domain.Entities.Message", "Message")
+                        .WithMany("Attachments")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FileAttachment");
+
+                    b.Navigation("Message");
                 });
 
             modelBuilder.Entity("ChatServer.Domain.Entities.MessageReaction", b =>
@@ -572,8 +677,15 @@ namespace ChatServer.Infrastructure.Data.Migrations
                     b.Navigation("Participants");
                 });
 
+            modelBuilder.Entity("ChatServer.Domain.Entities.FileAttachment", b =>
+                {
+                    b.Navigation("MessageAttachments");
+                });
+
             modelBuilder.Entity("ChatServer.Domain.Entities.Message", b =>
                 {
+                    b.Navigation("Attachments");
+
                     b.Navigation("Reactions");
 
                     b.Navigation("ReadStates");

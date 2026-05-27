@@ -25,4 +25,6 @@ public class Message : FullAuditEntity<Guid>
 
     public ICollection<MessageReaction> Reactions {set; get;}
     public ICollection<MessageReadState> ReadStates {set; get;}
+
+    public ICollection<MessageAttachment> Attachments { get; set; }
 }

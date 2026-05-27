@@ -14,7 +14,8 @@ namespace ChatServer.Application.Features.Chat.Commands.CreateMessage
         string Content,     // noi dung tin nhan
         Guid SenderId,       // nguoi gui la ai (lay tu token)
 
-        // id message reply (nullable)
-        Guid? ReplyToId = null
+        Guid? ReplyToId = null,  // id message reply (nullable)
+
+        List<long>? FileIds = null  // Client upload file → nhận fileId → gửi message kèm fileIds
     ) : IRequest<Guid>;
 }
